@@ -499,6 +499,28 @@ import('node:process').then(async () => {
             }
         }
 
+        if (message.content.startsWith('h!')){
+                const warningMsg = [
+                    '**🚨 AVISO DO SISTEMA 🚨**',
+                    '',
+                    '```asciidoc',
+                    '[ESTADO ATUAL]',
+                    'Sistema em fase beta - instabilidade esperada',
+                    '',
+                    '[RISCO DE ROLLBACKS]',
+                    '- Moedas',
+                    '- XP',
+                    '- Progresso de níveis',
+                    '',
+                    '[RECOMENDAÇÕES]',
+                    '1. Não faça acumulos massivos',
+                    '2. Reporte bugs no canal #bugs',
+                    '```'
+            ].join('\n');
+
+            message.channel.send(warningMsg);
+        }
+
         if (command === 'h!ping') {
             const initialEmbed = new EmbedBuilder()
                 .setColor(0x3498db)
