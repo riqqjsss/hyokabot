@@ -518,7 +518,9 @@ import('node:process').then(async () => {
                     '```'
             ].join('\n');
 
-            message.channel.send(warningMsg);
+            message.channel.send(warningMsg).then(msg => {
+                setTimeout(() => msg.delete().catch(() => {}), 5000);
+            });
         }
 
         if (command === 'h!ping') {
