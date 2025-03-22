@@ -1438,7 +1438,7 @@ import('node:process').then(async () => {
         if(command === "h!site"){
             const siteInfo = {
                 title: '🌐 Site Oficial da Hyoka',
-                url: 'https://05792d00-cd6d-4f0c-bd9a-235d78396029-00-1aywxigq8ndmc.kirk.replit.dev/',
+                url: 'https://hyokabot.onrender.com/',
                 description: 'Acesse nosso site para ver todos os comandos disponíveis e aprender a usá-los!',
                     features: [
                         '📜 Lista atualizada de comandos',
