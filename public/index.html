@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyokaBot - Funcionalidades</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #2f3136;
+            color: #dcddde;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #5865f2;
+            text-align: center;
+            border-bottom: 3px solid #40444b;
+            padding-bottom: 15px;
+        }
+
+        .feature-card {
+            background-color: #40444b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .feature-card h2 {
+            color: #b9bbbe;
+            margin-top: 0;
+        }
+
+        .command-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .command {
+            background-color: #36393f;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .command-code {
+            background-color: #2f3136;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Funcionalidades da HyokaBot</h1>
+
+        <div class="feature-card">
+            <h2>🎚️ Sistema de Níveis e XP</h2>
+            <ul>
+                <li>Ganhe XP enviando mensagens</li>
+                <li>Suba de nível e desbloqueie vantagens</li>
+                <li>Progresso visual com barra de progresso</li>
+            </ul>
+            <ul class="command-list">
+                <li class="command">
+                    <span>Ver seu perfil</span>
+                    <code class="command-code">h!perfil</code>
+                </li>
+                <li class="command">
+                    <span>Ranking do servidor</span>
+                    <code class="command-code">h!rank</code>
+                </li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h2>🛡️ Sistema de Moderação</h2>
+            <ul>
+                <li>Controle completo de moderadores</li>
+                <li>Mute temporário com motivo</li>
+                <li>Registro detalhado de ações</li>
+            </ul>
+            <ul class="command-list">
+                <li class="command">
+                    <span>Mutuar usuário</span>
+                    <code class="command-code">h!mute @usuário tempo motivo</code>
+                </li>
+                <li class="command">
+                    <span>Desmutar usuário</span>
+                    <code class="command-code">h!desmute @usuário</code>
+                </li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h2>💰 Economia Digital</h2>
+            <ul>
+                <li>Sistema diário de recompensas</li>
+                <li>Cassino com apostas e jackpot</li>
+                <li>Controle de saldo bancário</li>
+            </ul>
+            <ul class="command-list">
+                <li class="command">
+                    <span>Coletar diária</span>
+                    <code class="command-code">h!daily</code>
+                </li>
+                <li class="command">
+                    <span>Ver saldo</span>
+                    <code class="command-code">h!atm</code>
+                </li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h2>🔍 Utilidades</h2>
+            <ul>
+                <li>Informações detalhadas de usuários</li>
+                <li>Visualização de avatar e banner</li>
+                <li>Estatísticas de atividade</li>
+            </ul>
+            <ul class="command-list">
+                <li class="command">
+                    <span>Ver avatar</span>
+                    <code class="command-code">h!avatar</code>
+                </li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <h2>⚙️ Configurações</h2>
+            <ul>
+                <li>Personalização por servidor</li>
+                <li>Sistema de termos de uso</li>
+                <li>Controle de notificações</li>
+            </ul>
+            <ul class="command-list">
+                <li class="command">
+                    <span>Ativar/desativar mensagens de nível</span>
+                    <code class="command-code">h!levelmsg</code>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
