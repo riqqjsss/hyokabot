@@ -1599,7 +1599,7 @@ import('node:process').then(async () => {
             if (!userTerms) return;
 
             const targetUser = message.mentions.users.first();
-            const amount = parseInt(args[2]);
+            const amount = parseInt(args[1]);
 
             if (!targetUser || isNaN(amount) || amount <= 0) {
                 return message.reply('❌ Uso correto: `h!pay @usuário quantia`');
