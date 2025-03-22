@@ -9,13 +9,19 @@ import('node:process').then(async () => {
         PermissionsBitField,
         StringSelectMenuBuilder
     } = await require('discord.js');
-    const { getIPDetails } = await require('./geo.js');
+    const {
+        getIPDetails
+    } = await require('./geo.js');
     const fs = await require('fs');
     const express = await require('express');
     const path1 = await require('path');
     const axios = await require('axios');
     const dns = await require('dns').promises;
-    const { readFileSync, writeFileSync, existsSync } = fs;
+    const {
+        readFileSync,
+        writeFileSync,
+        existsSync
+    } = fs;
     const Enmap = (await import('enmap')).default;
     const client = new Client({
         intents: [
@@ -38,9 +44,13 @@ import('node:process').then(async () => {
         dataDir: "./data"
     });
 
-    const guildSettingsDB = new Enmap({ name: 'guildSettings' });
-    const termsDB = new Enmap({ name: 'termsAcceptance' });
-    
+    const guildSettingsDB = new Enmap({
+        name: 'guildSettings'
+    });
+    const termsDB = new Enmap({
+        name: 'termsAcceptance'
+    });
+
     const xpSettings = {
         cooldown: 2000,
         minXP: 30,
@@ -98,7 +108,7 @@ import('node:process').then(async () => {
             minutes > 0 && `${minutes}m`
         ].filter(Boolean).join(' ') || 'Menos de 1 minuto';
     }
-    
+
     app.use((req, res, next) => {
         const clientIP = (req.headers['x-forwarded-for'] || req.socket.remoteAddress)
             .split(',')[0]
@@ -131,7 +141,7 @@ import('node:process').then(async () => {
             res.type('text/plain').send(data);
         });
     });
-    
+
     app.use(express.static(path1.join(__dirname, 'public')));
 
     app.get('/', (req, res) => {
@@ -142,7 +152,7 @@ import('node:process').then(async () => {
         console.log(`Servidor rodando em http://localhost:${port}`);
         fs.openSync('visitors.log', 'a+');
     });
-    
+
     const dataFile = 'plataformas.json';
     let userPlatforms = {};
 
@@ -187,7 +197,7 @@ import('node:process').then(async () => {
 
         return `${hours}h ${minutes}m ${secs}s`;
     }
-    
+
     function getUserPlatform(userId) {
         userPlatforms = loadData();
         return userPlatforms[userId] || 'Desconhecido';
@@ -226,9 +236,9 @@ import('node:process').then(async () => {
                 isp: response.data.isp.replace(/AS\d+\s/, '') || 'Desconhecido',
                 org: response.data.org || 'Nenhuma',
                 timezone: response.data.timezone || 'UTC',
-                coordinates: response.data.lat && response.data.lon 
-                    ? `${response.data.lat}, ${response.data.lon}`
-                    : 'Indisponível',
+                coordinates: response.data.lat && response.data.lon ?
+                    `${response.data.lat}, ${response.data.lon}` :
+                    'Indisponível',
                 proxy: response.data.proxy || response.data.hosting ? '✅' : '❌',
                 asn: response.data.as?.replace(/^AS\d+\s/, '') || 'N/A'
             };
@@ -305,12 +315,15 @@ import('node:process').then(async () => {
 
     const cooldown = 24 * 60 * 60 * 1000;
     const path = './dailyRewards.json';
-    
+
     client.on('messageCreate', message => {
         if (message.author.bot) return;
 
         const userId = message.author.id;
-        if (!userStats[userId]) userStats[userId] = { messages: 0, voiceTime: 0 };
+        if (!userStats[userId]) userStats[userId] = {
+            messages: 0,
+            voiceTime: 0
+        };
 
         userStats[userId].messages += 1;
         saveDB();
@@ -320,15 +333,16 @@ import('node:process').then(async () => {
         const userId = newState.id;
 
         if (!userStats[userId]) {
-            userStats[userId] = { messages: 0, voiceTime: 0 };
+            userStats[userId] = {
+                messages: 0,
+                voiceTime: 0
+            };
         }
 
         if (!oldState.channel && newState.channel) {
             userStats[userId].joinedAt = Date.now();
             saveDB();
-        }
-
-        else if (oldState.channel && !newState.channel) {
+        } else if (oldState.channel && !newState.channel) {
             if (userStats[userId].joinedAt) {
                 const timeSpent = Math.floor((Date.now() - userStats[userId].joinedAt) / 1000);
                 userStats[userId].voiceTime += timeSpent;
@@ -348,7 +362,9 @@ import('node:process').then(async () => {
         const guildId = message.guild.id;
         const userId = message.author.id;
         initUserData(userId);
-        guildSettingsDB.ensure(guildId, { levelUpMsg: true });
+        guildSettingsDB.ensure(guildId, {
+            levelUpMsg: true
+        });
 
         const userData = xpDB.get(userId);
         if (Date.now() - userData.lastMessage < xpSettings.cooldown) return;
@@ -377,7 +393,7 @@ import('node:process').then(async () => {
 
     client.on('messageCreate', (message) => {
         if (message.author.bot) return;
-        
+
         const userTerms = termsDB.get(message.author.id) || false;
         if (!userTerms) return;
 
@@ -398,7 +414,7 @@ import('node:process').then(async () => {
     });
 
     const debugData = {};
-    
+
     client.on('messageCreate', async message => {
         if (message.author.bot) return;
 
@@ -412,33 +428,33 @@ import('node:process').then(async () => {
 
             if (!userTerms) {
                 const termsEmbed = new EmbedBuilder()
-                .setTitle('🌟 Bem-vindo ao HyokaBot!')
-                .setDescription([
-                    '**Para uma experiência completa, precisamos que você:**',
-                    '```diff',
-                    '+ 1. Compartilhar informações básicas de uso',
-                    '+ 2. Permitir o registro de preferências',
-                    '+ 3. Concordar com nossa política de serviços',
-                    '```',
-                    '📘 Isso nos ajuda a oferecer:',
-                    '• Recursos personalizados para você',
-                    '• Melhoria contínua do servidor',
-                    '• Comandos exclusivos e divertidos',
-                ].join('\n'))
-                .setColor(0x5865F2)
-                .setFooter({ 
-                    text: 'Sua escolha garante a melhor experiência!',
-                });
+                    .setTitle('🌟 Bem-vindo ao HyokaBot!')
+                    .setDescription([
+                        '**Para uma experiência completa, precisamos que você:**',
+                        '```diff',
+                        '+ 1. Compartilhar informações básicas de uso',
+                        '+ 2. Permitir o registro de preferências',
+                        '+ 3. Concordar com nossa política de serviços',
+                        '```',
+                        '📘 Isso nos ajuda a oferecer:',
+                        '• Recursos personalizados para você',
+                        '• Melhoria contínua do servidor',
+                        '• Comandos exclusivos e divertidos',
+                    ].join('\n'))
+                    .setColor(0x5865F2)
+                    .setFooter({
+                        text: 'Sua escolha garante a melhor experiência!',
+                    });
 
                 const buttons = new ActionRowBuilder().addComponents(
                     new ButtonBuilder()
-                        .setCustomId('accept_terms')
-                        .setLabel('✅ Aceitar Termos')
-                        .setStyle(ButtonStyle.Success),
+                    .setCustomId('accept_terms')
+                    .setLabel('✅ Aceitar Termos')
+                    .setStyle(ButtonStyle.Success),
                     new ButtonBuilder()
-                        .setCustomId('decline_terms')
-                        .setLabel('❌ Recusar Termos')
-                        .setStyle(ButtonStyle.Danger)
+                    .setCustomId('decline_terms')
+                    .setLabel('❌ Recusar Termos')
+                    .setStyle(ButtonStyle.Danger)
                 );
 
                 const sentMessage = await message.reply({
@@ -447,13 +463,12 @@ import('node:process').then(async () => {
                     fetchReply: true
                 });
 
-                const filter = (interaction) => 
-                    interaction.user.id === message.author.id &&
-                    ['accept_terms', 'decline_terms'].includes(interaction.customId);
+                const filter = (interaction) =>
+                    interaction.user.id === message.author.id && ['accept_terms', 'decline_terms'].includes(interaction.customId);
 
-                const collector = sentMessage.createMessageComponentCollector({ 
-                    filter, 
-                    time: 60000 
+                const collector = sentMessage.createMessageComponentCollector({
+                    filter,
+                    time: 60000
                 });
 
                 collector.on('collect', async (interaction) => {
@@ -475,13 +490,15 @@ import('node:process').then(async () => {
                 });
 
                 collector.on('end', () => {
-                    sentMessage.edit({ components: [] }).catch(() => {});
+                    sentMessage.edit({
+                        components: []
+                    }).catch(() => {});
                 });
 
                 return;
             }
         }
-        
+
         if (command === 'h!ping') {
             const initialEmbed = new EmbedBuilder()
                 .setColor(0x3498db)
@@ -675,8 +692,7 @@ import('node:process').then(async () => {
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('rankSelect')
                 .setPlaceholder('Selecione o ranking')
-                .addOptions([
-                    {
+                .addOptions([{
                         label: 'Classificação de XP',
                         value: 'xp',
                         emoji: '📈'
@@ -696,16 +712,16 @@ import('node:process').then(async () => {
                 .setDescription('Selecione o tipo de ranking desejado abaixo')
                 .setColor(0x2F3136);
 
-            const sentMessage = await message.reply({ 
-                embeds: [initialEmbed], 
-                components: [actionRow] 
+            const sentMessage = await message.reply({
+                embeds: [initialEmbed],
+                components: [actionRow]
             });
 
             // Coletor de interações
             const filter = i => i.user.id === message.author.id;
-            const collector = sentMessage.createMessageComponentCollector({ 
-                filter, 
-                time: 60000 
+            const collector = sentMessage.createMessageComponentCollector({
+                filter,
+                time: 60000
             });
 
             collector.on('collect', async i => {
@@ -720,19 +736,19 @@ import('node:process').then(async () => {
                         if (!xpDB || xpDB.size === 0) throw new Error('Sem dados de XP');
 
                         const xpData = [...xpDB.entries()]
-                        .map(([id, data]) => ({
-                            id,
-                            level: data.level || 0,
-                            totalXP: ( 
-                                ((data.level || 0) * 
-                                ((data.level || 0) - 1) / 2 * 1000) + 
-                                (data.xp || 0)
-                            )
-                        }))
-                        .sort((a, b) => b.totalXP - a.totalXP)
-                        .slice(0, 10);
+                            .map(([id, data]) => ({
+                                id,
+                                level: data.level || 0,
+                                totalXP: (
+                                    ((data.level || 0) *
+                                        ((data.level || 0) - 1) / 2 * 1000) +
+                                    (data.xp || 0)
+                                )
+                            }))
+                            .sort((a, b) => b.totalXP - a.totalXP)
+                            .slice(0, 10);
 
-                        embedContent = xpData.map((user, index) => 
+                        embedContent = xpData.map((user, index) =>
                             `**${index + 1}.** ${client.users.cache.get(user.id)?.username || 'Usuário'} ─ ` +
                             `Nível ${user.level} (${user.totalXP.toLocaleString()} XP)`
                         ).join('\n');
@@ -748,7 +764,7 @@ import('node:process').then(async () => {
                             .sort((a, b) => b.balance - a.balance)
                             .slice(0, 10);
 
-                        embedContent = coinsData.map((user, index) => 
+                        embedContent = coinsData.map((user, index) =>
                             `**${index + 1}.** ${client.users.cache.get(user.id)?.username || 'Usuário'} ─ ` +
                             `${user.balance.toLocaleString()} moedas`
                         ).join('\n');
@@ -764,9 +780,9 @@ import('node:process').then(async () => {
                             iconURL: message.author.displayAvatarURL()
                         });
 
-                    await i.editReply({ 
-                        embeds: [resultEmbed], 
-                        components: [] 
+                    await i.editReply({
+                        embeds: [resultEmbed],
+                        components: []
                     });
 
                 } catch (error) {
@@ -775,16 +791,18 @@ import('node:process').then(async () => {
                         .setDescription(`Falha ao carregar dados: ${error.message}`)
                         .setColor(0xFF0000);
 
-                    await i.editReply({ 
-                        embeds: [errorEmbed], 
-                        components: [] 
+                    await i.editReply({
+                        embeds: [errorEmbed],
+                        components: []
                     });
                 }
             });
 
             collector.on('end', collected => {
                 if (!collected.size) {
-                    sentMessage.edit({ components: [] }).catch(() => {});
+                    sentMessage.edit({
+                        components: []
+                    }).catch(() => {});
                 }
             });
         }
@@ -812,55 +830,107 @@ import('node:process').then(async () => {
             const messageCount = getMessageCount(user.id) || "Não rastreado";
             const voiceSeconds = getVoiceTime(user.id) || 0;
             const voiceTime = formatTime(voiceSeconds);
-            
+
             let pages = [
                 new EmbedBuilder()
-                    .setTitle("🕵️ RiqWatcher - Analisando Usuario (Página 1)")
-                    .setColor(0x1F8B4C)
-                    .setThumbnail(user.displayAvatarURL({ dynamic: true }))
-                    .addFields(
-                        { name: "Identidade", value: `${user.tag} (${user.id})`, inline: false },
-                        { name: "Apelido", value: nickname, inline: true },
-                        { name: "É um bot?", value: isBot, inline: true },
-                        { name: "Dispositivo(s)(**Impreciso.**)", value: devices, inline: true },
-                        { name: "Criou a conta", value: createdAt, inline: false },
-                        { name: "Entrou no Servidor", value: joinedAt, inline: false }
-                    )
-                    .setFooter({ text: "Página 1/2" }),
+                .setTitle("🕵️ RiqWatcher - Analisando Usuario (Página 1)")
+                .setColor(0x1F8B4C)
+                .setThumbnail(user.displayAvatarURL({
+                    dynamic: true
+                }))
+                .addFields({
+                    name: "Identidade",
+                    value: `${user.tag} (${user.id})`,
+                    inline: false
+                }, {
+                    name: "Apelido",
+                    value: nickname,
+                    inline: true
+                }, {
+                    name: "É um bot?",
+                    value: isBot,
+                    inline: true
+                }, {
+                    name: "Dispositivo(s)(**Impreciso.**)",
+                    value: devices,
+                    inline: true
+                }, {
+                    name: "Criou a conta",
+                    value: createdAt,
+                    inline: false
+                }, {
+                    name: "Entrou no Servidor",
+                    value: joinedAt,
+                    inline: false
+                })
+                .setFooter({
+                    text: "Página 1/2"
+                }),
 
                 new EmbedBuilder()
-                    .setTitle("🕵️ RiqWatcher - Dossiê do Usuario (Página 2)")
-                    .setColor(0x1F8B4C)
-                    .addFields(
-                        { name: "Cargo Mais Alto", value: highestRole, inline: true },
-                        { name: "Todos os Cargos", value: roles, inline: false },
-                        { name: "Status Atual", value: status, inline: true },
-                        { name: "Plataforma", value: platform, inline: true },
-                        { name: "Atividade Recente", value: activity, inline: true },
-                        { name: "Booster do Servidor?", value: isBoosting, inline: true },
-                        { name: "Mensagens Enviadas", value: messageCount.toString(), inline: true },
-                        { name: "Tempo no Canal de Voz", value: voiceTime.toString(), inline: true }
-                    )
-                    .setFooter({ text: "Página 2/2" })
+                .setTitle("🕵️ RiqWatcher - Dossiê do Usuario (Página 2)")
+                .setColor(0x1F8B4C)
+                .addFields({
+                    name: "Cargo Mais Alto",
+                    value: highestRole,
+                    inline: true
+                }, {
+                    name: "Todos os Cargos",
+                    value: roles,
+                    inline: false
+                }, {
+                    name: "Status Atual",
+                    value: status,
+                    inline: true
+                }, {
+                    name: "Plataforma",
+                    value: platform,
+                    inline: true
+                }, {
+                    name: "Atividade Recente",
+                    value: activity,
+                    inline: true
+                }, {
+                    name: "Booster do Servidor?",
+                    value: isBoosting,
+                    inline: true
+                }, {
+                    name: "Mensagens Enviadas",
+                    value: messageCount.toString(),
+                    inline: true
+                }, {
+                    name: "Tempo no Canal de Voz",
+                    value: voiceTime.toString(),
+                    inline: true
+                })
+                .setFooter({
+                    text: "Página 2/2"
+                })
             ];
 
             let currentPage = 0;
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setCustomId("previous")
-                    .setLabel("⏮️ Anterior")
-                    .setStyle(ButtonStyle.Primary)
-                    .setDisabled(true),
+                .setCustomId("previous")
+                .setLabel("⏮️ Anterior")
+                .setStyle(ButtonStyle.Primary)
+                .setDisabled(true),
                 new ButtonBuilder()
-                    .setCustomId("next")
-                    .setLabel("Próximo ⏭️")
-                    .setStyle(ButtonStyle.Primary)
+                .setCustomId("next")
+                .setLabel("Próximo ⏭️")
+                .setStyle(ButtonStyle.Primary)
             );
 
-            const msg = await message.reply({ embeds: [pages[currentPage]], components: [row] });
+            const msg = await message.reply({
+                embeds: [pages[currentPage]],
+                components: [row]
+            });
 
             const filter = i => i.user.id === message.author.id;
-            const collector = msg.createMessageComponentCollector({ filter, time: 60000 });
+            const collector = msg.createMessageComponentCollector({
+                filter,
+                time: 60000
+            });
 
             collector.on("collect", async i => {
                 if (i.customId === "next") {
@@ -872,12 +942,17 @@ import('node:process').then(async () => {
                 row.components[0].setDisabled(currentPage === 0);
                 row.components[1].setDisabled(currentPage === pages.length - 1);
 
-                await i.update({ embeds: [pages[currentPage]], components: [row] });
+                await i.update({
+                    embeds: [pages[currentPage]],
+                    components: [row]
+                });
             });
 
             collector.on("end", () => {
                 row.components.forEach(button => button.setDisabled(true));
-                msg.edit({ components: [row] });
+                msg.edit({
+                    components: [row]
+                });
             });
         }
 
@@ -1094,8 +1169,7 @@ import('node:process').then(async () => {
                     }, {
                         name: '⏳ Período',
                         value: muteEntry?.createdAt ?
-                            `Aplicado: <t:${Math.floor(muteEntry.createdAt.getTime()/1000)}:R>` :
-                            'Registro não encontrado',
+                            `Aplicado: <t:${Math.floor(muteEntry.createdAt.getTime()/1000)}:R>` : 'Registro não encontrado',
                         inline: true
                     })
                     .setThumbnail(user.displayAvatarURL({
@@ -1238,10 +1312,14 @@ import('node:process').then(async () => {
                     .setTitle("🎰 JACKPOT 🎰")
                     .setDescription(`**${message.author.username}** acertou o **JACKPOT** e ganhou **${winnings.toLocaleString()} moedas!**`)
                     .setColor(0xFFD700)
-                    .setFooter({ text: "LUCKY SPIN! 🍀" });
+                    .setFooter({
+                        text: "LUCKY SPIN! 🍀"
+                    });
 
                 fs.writeFileSync(path, JSON.stringify(data, null, 2));
-                return message.reply({ embeds: [embed] });
+                return message.reply({
+                    embeds: [embed]
+                });
 
             } else if (normalWin) {
                 const winnings = Math.floor(amount * (1.5 + Math.random() * 3));
@@ -1251,10 +1329,14 @@ import('node:process').then(async () => {
                     .setTitle("🎲 Aposta Ganha")
                     .setDescription(`**${message.author.username}** apostou **${amount.toLocaleString()}** e ganhou **${winnings.toLocaleString()}** moedas!`)
                     .setColor(0x00FF00)
-                    .setFooter({ text: "Boa sorte na próxima rodada!" });
+                    .setFooter({
+                        text: "Boa sorte na próxima rodada!"
+                    });
 
                 fs.writeFileSync(path, JSON.stringify(data, null, 2));
-                return message.reply({ embeds: [embed] });
+                return message.reply({
+                    embeds: [embed]
+                });
 
             } else {
                 data[userId].balance -= amount;
@@ -1263,10 +1345,14 @@ import('node:process').then(async () => {
                     .setTitle("❌ Aposta Perdida")
                     .setDescription(`**${message.author.username}** perdeu **${amount.toLocaleString()} moedas**.`)
                     .setColor(0xFF0000)
-                    .setFooter({ text: "Boa sorte na próxima rodada!" });
+                    .setFooter({
+                        text: "Boa sorte na próxima rodada!"
+                    });
 
                 fs.writeFileSync(path, JSON.stringify(data, null, 2));
-                return message.reply({ embeds: [embed] });
+                return message.reply({
+                    embeds: [embed]
+                });
             }
         }
 
@@ -1347,41 +1433,37 @@ import('node:process').then(async () => {
                     return new EmbedBuilder()
                         .setTitle(`🌍 Geolocalização - ${ipInfo.ip}`)
                         .setColor(ipInfo.proxy === '✅' ? 0xFF0000 : 0x00FF00)
-                        .addFields(
-                            {
-                                name: '📌 Localização',
-                                value: [
-                                    `**País:** ${ipInfo.country}`,
-                                    `**Região:** ${ipInfo.region}`,
-                                    `**Cidade:** ${ipInfo.city}`,
-                                    `**Coordenadas:** \`${ipInfo.coordinates}\``,
-                                    `**Fuso Horário:** ${ipInfo.timezone}`
-                                ].join('\n'),
-                                inline: true
-                            },
-                            {
-                                name: '🔧 Rede',
-                                value: [
-                                    `**ISP:** ${ipInfo.isp}`,
-                                    `**Organização:** ${ipInfo.org}`,
-                                    `**ASN:** ${ipInfo.asn}`,
-                                    `**Proxy/VPN:** ${ipInfo.proxy}`,
-                                    `**DNS Reverso:** \`${ipInfo.reverse}\``
-                                ].join('\n'),
-                                inline: true
-                            },
-                            {
-                                name: '📊 Atividade',
-                                value: [
-                                    `**Acessos:** ${ipInfo.count}x`,
-                                    `**Primeiro Acesso:** <t:${Math.floor(new Date(ipInfo.firstSeen)/1000)}:R>`,
-                                    `**Último Acesso:** <t:${Math.floor(new Date(ipInfo.lastSeen)/1000)}:R>`,
-                                    `**Paths:** \`\`\`${ipInfo.paths}\`\`\``,
-                                    `**User Agents:** \`\`\`${ipInfo.userAgents}\`\`\``
-                                ].join('\n')
-                            }
-                        )
-                        .setFooter({ 
+                        .addFields({
+                            name: '📌 Localização',
+                            value: [
+                                `**País:** ${ipInfo.country}`,
+                                `**Região:** ${ipInfo.region}`,
+                                `**Cidade:** ${ipInfo.city}`,
+                                `**Coordenadas:** \`${ipInfo.coordinates}\``,
+                                `**Fuso Horário:** ${ipInfo.timezone}`
+                            ].join('\n'),
+                            inline: true
+                        }, {
+                            name: '🔧 Rede',
+                            value: [
+                                `**ISP:** ${ipInfo.isp}`,
+                                `**Organização:** ${ipInfo.org}`,
+                                `**ASN:** ${ipInfo.asn}`,
+                                `**Proxy/VPN:** ${ipInfo.proxy}`,
+                                `**DNS Reverso:** \`${ipInfo.reverse}\``
+                            ].join('\n'),
+                            inline: true
+                        }, {
+                            name: '📊 Atividade',
+                            value: [
+                                `**Acessos:** ${ipInfo.count}x`,
+                                `**Primeiro Acesso:** <t:${Math.floor(new Date(ipInfo.firstSeen)/1000)}:R>`,
+                                `**Último Acesso:** <t:${Math.floor(new Date(ipInfo.lastSeen)/1000)}:R>`,
+                                `**Paths:** \`\`\`${ipInfo.paths}\`\`\``,
+                                `**User Agents:** \`\`\`${ipInfo.userAgents}\`\`\``
+                            ].join('\n')
+                        })
+                        .setFooter({
                             text: `Página ${page + 1}/${totalPages} • ${new Date().toLocaleString('pt-BR')}`,
                             iconURL: message.client.user.displayAvatarURL()
                         });
@@ -1390,27 +1472,27 @@ import('node:process').then(async () => {
                 // Componentes de navegação
                 const row = new ActionRowBuilder().addComponents(
                     new ButtonBuilder()
-                        .setCustomId('previous')
-                        .setLabel('◀️ Anterior')
-                        .setStyle(ButtonStyle.Primary)
-                        .setDisabled(true),
+                    .setCustomId('previous')
+                    .setLabel('◀️ Anterior')
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(true),
                     new ButtonBuilder()
-                        .setCustomId('next')
-                        .setLabel('Próximo ▶️')
-                        .setStyle(ButtonStyle.Primary)
-                        .setDisabled(totalPages <= 1)
+                    .setCustomId('next')
+                    .setLabel('Próximo ▶️')
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(totalPages <= 1)
                 );
 
                 // Envia a primeira página
-                const response = await message.reply({ 
-                    embeds: [createEmbed(currentPage)], 
+                const response = await message.reply({
+                    embeds: [createEmbed(currentPage)],
                     components: [row]
                 });
 
                 // Coletor de interações
-                const collector = response.createMessageComponentCollector({ 
-                    filter: i => i.user.id === message.author.id, 
-                    time: 300000 
+                const collector = response.createMessageComponentCollector({
+                    filter: i => i.user.id === message.author.id,
+                    time: 300000
                 });
 
                 collector.on('collect', async i => {
@@ -1426,7 +1508,9 @@ import('node:process').then(async () => {
                 });
 
                 collector.on('end', () => {
-                    response.edit({ components: [] }).catch(() => {});
+                    response.edit({
+                        components: []
+                    }).catch(() => {});
                 });
 
             } catch (error) {
@@ -1435,17 +1519,17 @@ import('node:process').then(async () => {
             }
         }
 
-        if(command === "h!site"){
+        if (command === "h!site") {
             const siteInfo = {
                 title: '🌐 Site Oficial da Hyoka',
                 url: 'https://hyokabot.onrender.com/',
                 description: 'Acesse nosso site para ver todos os comandos disponíveis e aprender a usá-los!',
-                    features: [
-                        '📜 Lista atualizada de comandos',
-                        '⚙️ Exemplos de uso detalhados',
-                        '🔍 Descrições completas',
-                        '🆕 Notas de atualização'
-                    ]
+                features: [
+                    '📜 Lista atualizada de comandos',
+                    '⚙️ Exemplos de uso detalhados',
+                    '🔍 Descrições completas',
+                    '🆕 Notas de atualização'
+                ]
             };
 
             const embed = new EmbedBuilder()
@@ -1456,14 +1540,16 @@ import('node:process').then(async () => {
                     name: '✨ Funcionalidades',
                     value: siteInfo.features.map((f, i) => `${i + 1}. ${f}`).join('\n')
                 })
-                .setFooter({ text: 'Clique no botão abaixo para acessar' });
+                .setFooter({
+                    text: 'Clique no botão abaixo para acessar'
+                });
 
             const row = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
-                    .setLabel('Acessar Site')
-                    .setURL(siteInfo.url)
-                    .setStyle(ButtonStyle.Link)
-                    .setEmoji('🌐')
+                .setLabel('Acessar Site')
+                .setURL(siteInfo.url)
+                .setStyle(ButtonStyle.Link)
+                .setEmoji('🌐')
             );
 
             message.channel.send({
@@ -1508,6 +1594,130 @@ import('node:process').then(async () => {
             }
         }
 
+        if (command === 'h!pay') {
+            const userTerms = termsDB.get(message.author.id) || false;
+            if (!userTerms) return;
+
+            const targetUser = message.mentions.users.first();
+            const amount = parseInt(args[2]);
+
+            if (!targetUser || isNaN(amount) || amount <= 0) {
+                return message.reply('❌ Uso correto: `h!pay @usuário quantia`');
+            }
+
+            if (targetUser.bot) {
+                return message.reply('❌ Não pode transferir para bots!');
+            }
+
+            if (targetUser.id === message.author.id) {
+                return message.reply('❌ Não pode transferir para si mesmo!');
+            }
+
+            let data;
+            try {
+                data = JSON.parse(fs.readFileSync(path, 'utf8'));
+            } catch (err) {
+                console.error(err);
+                return message.reply('❌ Erro ao acessar dados financeiros!');
+            }
+
+            const senderId = message.author.id;
+            const receiverId = targetUser.id;
+
+            if (!data[senderId] || data[senderId].balance < amount) {
+                return message.reply('❌ Saldo insuficiente para realizar a transferência!');
+            }
+
+            const embed = new EmbedBuilder()
+                .setTitle('💸 Confirmação de Pagamento')
+                .setDescription(`**${message.author.username}** deseja transferir **${amount.toLocaleString()} moedas** para **${targetUser.username}**`)
+                .addFields({
+                    name: '🔄 Status',
+                    value: 'Aguardando confirmação de ambos...'
+                }, {
+                    name: '⏳ Tempo',
+                    value: '2 minutos para confirmar'
+                })
+                .setColor(0xFEE75C)
+                .setFooter({
+                    text: 'Reaja com ✅ para confirmar'
+                });
+
+            const confirmationMessage = await message.channel.send({
+                embeds: [embed],
+                content: `${message.author} ${targetUser}`
+            });
+
+            await confirmationMessage.react('✅');
+
+            const filter = (reaction, user) => {
+                return reaction.emoji.name === '✅' &&
+                    (user.id === senderId || user.id === receiverId);
+            };
+
+            const collector = confirmationMessage.createReactionCollector({
+                filter,
+                time: 120000,
+                dispose: true
+            });
+
+            const confirmations = new Set();
+
+            collector.on('collect', async (reaction, user) => {
+                confirmations.add(user.id);
+
+                if (confirmations.size === 1) {
+                    embed.spliceFields(0, 1, {
+                        name: '🔄 Status',
+                        value: `✅ ${user.username} confirmou!\nAguardando o outro usuário...`
+                    });
+                    await confirmationMessage.edit({
+                        embeds: [embed]
+                    });
+                }
+
+                if (confirmations.size === 2) {
+                    collector.stop();
+
+                    data[senderId].balance -= amount;
+                    data[receiverId] = data[receiverId] || {
+                        balance: 0,
+                        lastClaim: 0
+                    };
+                    data[receiverId].balance += amount;
+
+                    try {
+                        fs.writeFileSync(path, JSON.stringify(data, null, 2));
+                        embed.spliceFields(0, 2, {
+                            name: '✅ Transação Concluída',
+                            value: `${amount.toLocaleString()} moedas transferidas com sucesso!`
+                        });
+                        embed.setColor(0x57F287);
+                        await confirmationMessage.edit({
+                            embeds: [embed],
+                            components: []
+                        });
+                    } catch (err) {
+                        console.error(err);
+                        message.channel.send('❌ Erro ao processar transação!');
+                    }
+                }
+            });
+
+            collector.on('end', (collected, reason) => {
+                if (reason === 'time') {
+                    embed.spliceFields(0, 2, {
+                        name: '❌ Transação Expirada',
+                        value: 'Tempo de confirmação esgotado!'
+                    });
+                    embed.setColor(0xED4245);
+                    confirmationMessage.edit({
+                        embeds: [embed],
+                        components: []
+                    });
+                }
+            });
+        }
     });
 
     client.login(token);
