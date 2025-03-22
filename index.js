@@ -514,7 +514,6 @@ import('node:process').then(async () => {
                     '',
                     '[RECOMENDAÇÕES]',
                     '1. Não faça acumulos massivos',
-                    '2. Reporte bugs no canal #bugs',
                     '```'
             ].join('\n');
 
