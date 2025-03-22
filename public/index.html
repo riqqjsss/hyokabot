@@ -1,156 +1,210 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyokaBot - Funcionalidades</title>
+    <title>Hyoka - Comandos Oficiais</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #2f3136;
-            color: #dcddde;
+        :root {
+            --primary: #7B68EE;
+            --background: #0F0F12;
+            --card-bg: #1E1E24;
+            --text: #F0F0F7;
+            --gradient: linear-gradient(135deg, #7B68EE 0%, #5865F2 100%);
+        }
+
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.8;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 6rem 0;
+            background: var(--gradient);
+            clip-path: polygon(0 0, 100% 0, 100% 90%, 0 100%);
         }
 
         h1 {
-            color: #5865f2;
-            text-align: center;
-            border-bottom: 3px solid #40444b;
-            padding-bottom: 15px;
+            font-size: 2.5rem;
+            margin: 1rem 0;
+            font-weight: 600;
         }
 
-        .feature-card {
-            background-color: #40444b;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
         }
 
-        .feature-card h2 {
-            color: #b9bbbe;
-            margin-top: 0;
+        .command-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            border-left: 4px solid var(--primary);
         }
 
-        .command-list {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        .command {
-            background-color: #36393f;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 5px;
+        .command-name {
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 0.5rem;
         }
 
-        .command-code {
-            background-color: #2f3136;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-family: monospace;
+        .command-desc {
+            opacity: 0.9;
+            margin-bottom: 1rem;
+            min-height: 60px;
+        }
+
+        .command-syntax {
+            background: rgba(255,255,255,0.05);
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge {
+            background: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+            opacity: 0.7;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🤖 Funcionalidades da HyokaBot</h1>
-
-        <div class="feature-card">
-            <h2>🎚️ Sistema de Níveis e XP</h2>
-            <ul>
-                <li>Ganhe XP enviando mensagens</li>
-                <li>Suba de nível e desbloqueie vantagens</li>
-                <li>Progresso visual com barra de progresso</li>
-            </ul>
-            <ul class="command-list">
-                <li class="command">
-                    <span>Ver seu perfil</span>
-                    <code class="command-code">h!perfil</code>
-                </li>
-                <li class="command">
-                    <span>Ranking do servidor</span>
-                    <code class="command-code">h!rank</code>
-                </li>
-            </ul>
+    <header>
+        <div class="container">
+            <h1><i class="fas fa-robot"></i> Comandos da Hyoka</h1>
+            <p>Bot multifuncional com sistemas de XP, moderação e economia</p>
         </div>
+    </header>
 
-        <div class="feature-card">
-            <h2>🛡️ Sistema de Moderação</h2>
-            <ul>
-                <li>Controle completo de moderadores</li>
-                <li>Mute temporário com motivo</li>
-                <li>Registro detalhado de ações</li>
-            </ul>
-            <ul class="command-list">
-                <li class="command">
-                    <span>Mutuar usuário</span>
-                    <code class="command-code">h!mute @usuário tempo motivo</code>
-                </li>
-                <li class="command">
-                    <span>Desmutar usuário</span>
-                    <code class="command-code">h!desmute @usuário</code>
-                </li>
-            </ul>
-        </div>
+    <main class="container">
+        <!-- Informações -->
+        <section>
+            <h2><i class="fas fa-info-circle"></i> Informações</h2>
+            <div class="command-grid">
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-bolt"></i> h!ping</div>
+                    <div class="command-desc">Verifica a latência do bot e da API do Discord</div>
+                    <div class="command-syntax">h!ping</div>
+                </div>
 
-        <div class="feature-card">
-            <h2>💰 Economia Digital</h2>
-            <ul>
-                <li>Sistema diário de recompensas</li>
-                <li>Cassino com apostas e jackpot</li>
-                <li>Controle de saldo bancário</li>
-            </ul>
-            <ul class="command-list">
-                <li class="command">
-                    <span>Coletar diária</span>
-                    <code class="command-code">h!daily</code>
-                </li>
-                <li class="command">
-                    <span>Ver saldo</span>
-                    <code class="command-code">h!atm</code>
-                </li>
-            </ul>
-        </div>
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-id-card"></i> h!perfil</div>
+                    <div class="command-desc">Exibe nível, XP e informações do usuário</div>
+                    <div class="command-syntax">h!perfil @usuário</div>
+                </div>
 
-        <div class="feature-card">
-            <h2>🔍 Utilidades</h2>
-            <ul>
-                <li>Informações detalhadas de usuários</li>
-                <li>Visualização de avatar e banner</li>
-                <li>Estatísticas de atividade</li>
-            </ul>
-            <ul class="command-list">
-                <li class="command">
-                    <span>Ver avatar</span>
-                    <code class="command-code">h!avatar</code>
-                </li>
-            </ul>
-        </div>
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-image"></i> h!avatar</div>
+                    <div class="command-desc">Mostra o avatar em alta resolução</div>
+                    <div class="command-syntax">h!avatar @usuário</div>
+                </div>
+            </div>
+        </section>
 
-        <div class="feature-card">
-            <h2>⚙️ Configurações</h2>
-            <ul>
-                <li>Personalização por servidor</li>
-                <li>Sistema de termos de uso</li>
-                <li>Controle de notificações</li>
-            </ul>
-            <ul class="command-list">
-                <li class="command">
-                    <span>Ativar/desativar mensagens de nível</span>
-                    <code class="command-code">h!levelmsg</code>
-                </li>
-            </ul>
-        </div>
-    </div>
+        <!-- Moderação -->
+        <section>
+            <h2><i class="fas fa-shield-alt"></i> Moderação</h2>
+            <div class="command-grid">
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-volume-mute"></i> h!mute</div>
+                    <div class="command-desc">Silencia um membro temporariamente</div>
+                    <div class="command-syntax">h!mute @usuário tempo motivo</div>
+                    <div class="badge">Exemplo: h!mute @user 2h Spam</div>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-volume-up"></i> h!desmute</div>
+                    <div class="command-desc">Remove o mute de um membro</div>
+                    <div class="command-syntax">h!desmute @usuário</div>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-bell"></i> h!levelmsg</div>
+                    <div class="command-desc">Controla mensagens de level up</div>
+                    <div class="command-syntax">h!levelmsg on/off</div>
+                    <div class="badge">Require admin</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Economia -->
+        <section>
+            <h2><i class="fas fa-coins"></i> Economia</h2>
+            <div class="command-grid">
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-calendar-day"></i> h!daily</div>
+                    <div class="command-desc">Resgate diário de moedas</div>
+                    <div class="command-syntax">h!daily</div>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-wallet"></i> h!atm</div>
+                    <div class="command-desc">Verifica seu saldo</div>
+                    <div class="command-syntax">h!atm</div>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-dice"></i> h!bet</div>
+                    <div class="command-desc">Sistema de apostas</div>
+                    <div class="command-syntax">h!bet valor</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Utilidades -->
+        <section>
+            <h2><i class="fas fa-toolbox"></i> Utilidades</h2>
+            <div class="command-grid">
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-trophy"></i> h!rank</div>
+                    <div class="command-desc">Leaderboards de XP e moedas</div>
+                    <div class="command-syntax">h!rank</div>
+                </div>
+
+                <div class="command-card">
+                    <div class="command-name"><i class="fas fa-globe"></i> h!site</div>
+                    <div class="command-desc">Link do site oficial</div>
+                    <div class="command-syntax">h!site</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Hyoka - Todos os direitos reservados</p>
+        <p>Desenvolvido com <i class="fas fa-heart" style="color:#ff3366"></i> para comunidades Discord</p>
+    </footer>
 </body>
 </html>
