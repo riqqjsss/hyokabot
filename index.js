@@ -219,35 +219,29 @@ import('node:process').then(async () => {
         return `[${'▰'.repeat(progress)}${'▱'.repeat(10 - progress)}] ${Math.round(percentage)}%`;
     }
 
-    async function getGeoData(ip) {
-        try {
-            const response = await axios.get(`http://ip-api.com/json/${ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,proxy,hosting,query`, {
-                headers: {
-                    'User-Agent': 'HyokaBot/1.0'
-                }
-            });
+async function getGeoData(ip) {
+    try {
+        const response = await fetch(`http://ip-api.com/json/${ip}?fields=66842623`);
+        const data = await response.json();
 
-            if (response.data.status !== 'success') return null;
+        if (data.status !== 'success') return null;
 
-            return {
-                country: response.data.country || 'Desconhecido',
-                city: response.data.city || 'Desconhecido',
-                region: response.data.regionName || 'N/A',
-                isp: response.data.isp.replace(/AS\d+\s/, '') || 'Desconhecido',
-                org: response.data.org || 'Nenhuma',
-                timezone: response.data.timezone || 'UTC',
-                coordinates: response.data.lat && response.data.lon ?
-                    `${response.data.lat}, ${response.data.lon}` :
-                    'Indisponível',
-                proxy: response.data.proxy || response.data.hosting ? '✅' : '❌',
-                asn: response.data.as?.replace(/^AS\d+\s/, '') || 'N/A'
-            };
-        } catch (error) {
-            console.error(`Erro na geolocalização do IP ${ip}:`, error.message);
-            return null;
-        }
+        return {
+            country: data.country || 'Desconhecido',
+            region: data.regionName || 'Desconhecido',
+            city: data.city || 'Desconhecido',
+            coordinates: `${data.lat}, ${data.lon}`,
+            timezone: data.timezone || 'Desconhecido',
+            isp: data.isp || 'Desconhecido',
+            org: data.org || 'Desconhecido',
+            asn: data.as || 'Desconhecido',
+            proxy: data.proxy || data.vpn || data.tor ? '✅' : '❌'
+        };
+    } catch (error) {
+        console.error(`Erro ao obter geolocalização do IP ${ip}:`, error);
+        return null;
     }
-
+}
     async function getReverseDNS(ip) {
         try {
             const hostnames = await dns.reverse(ip);
