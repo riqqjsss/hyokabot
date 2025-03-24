@@ -1770,18 +1770,20 @@ import('node:process').then(async () => {
             const userTerms = termsDB.get(message.author.id) || false;
             if (!userTerms) return;
 
-            // Validação básica do argumento
-            if (!args[1]) {
+            // Verificação robusta do argumento
+            if (!args[1] || args[1].trim() === "") {
                 return message.reply("❌ Especifique o valor! Exemplo: `h!depositar 500`");
             }
 
-            // Converter para número com sanitização
-            const amount = parseInt(args[1].replace(/[^0-9]/g, ''));
+            // Sanitização completa
+            const sanitizedInput = args[1].trim().replace(/[^0-9]/g, '');
+            const amount = parseInt(sanitizedInput);
 
-            console.log("Valor parseado:", amount); // Debug melhorado
+            console.log("Input sanitizado:", sanitizedInput); // Debug
+            console.log("Valor convertido:", amount); // Debug
 
             if (isNaN(amount) || amount <= 0) {
-                return message.reply(`❌ Valor inválido! Use apenas números. Exemplo: \`h!depositar 1000\``);
+                return message.reply("❌ Valor inválido! Use apenas números (Ex: `h!depositar 1205`)");
             }
 
             let data;
