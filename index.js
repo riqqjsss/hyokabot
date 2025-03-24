@@ -1829,6 +1829,7 @@ import('node:process').then(async () => {
         }
 
         if (command === "h!sacar") {
+            console.log(args);
             const userTerms = termsDB.get(message.author.id) || false;
             if (!userTerms) return;
 
