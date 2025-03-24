@@ -2033,6 +2033,7 @@ import('node:process').then(async () => {
                 message.reply('❌ Erro ao processar saque!');
             }
         }
+
     });
 
     client.login(token);
