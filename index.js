@@ -1934,117 +1934,118 @@ import('node:process').then(async () => {
         }
 
 if (command === "h!sacar") {
-    console.log("Recebido comando de saque!");
-    console.log("Argumentos recebidos:", args);
+    console.log("[Saque] Comando recebido. Argumentos:", args);
 
+    // Verificar termos
     const userTerms = termsDB.get(message.author.id) || false;
-    if (!userTerms) return;
+    if (!userTerms) return message.reply("❌ Aceite os termos primeiro com `h!termos`");
 
-    // Verificação inicial corrigida: args[0] é o primeiro argumento após o comando
-    if (!args[0]) {
+    // Validação básica
+    if (!args.length) {
         return message.reply("❌ Especifique o valor ou use `all`. Exemplo: `h!sacar 500` ou `h!sacar all`");
     }
 
+    // Carregar dados
     let data;
     try {
         data = JSON.parse(fs.readFileSync(path, 'utf8'));
+        console.log("[Saque] Dados carregados para:", message.author.id);
     } catch (err) {
-        console.error("Erro ao carregar os dados:", err);
-        return message.reply('❌ Erro ao acessar dados financeiros!');
+        console.error("[Saque] Erro ao ler arquivo:", err);
+        return message.reply('❌ Banco de dados temporariamente indisponível');
     }
 
     const userId = message.author.id;
-    const deposits = data[userId]?.deposits || [];
+    if (!data[userId]?.deposits?.length) {
+        return message.reply("❌ Você não tem depósitos para sacar!");
+    }
 
-    let totalDepositado = deposits.reduce((acc, deposit) => {
+    // Calcular saldo total com juros
+    let totalDisponivel = data[userId].deposits.reduce((acc, deposit) => {
         const dias = Math.floor((Date.now() - deposit.timestamp) / 86400000);
-        return acc + (deposit.amount * Math.pow(1.10, dias));
+        const juros = Math.pow(1.10, dias);
+        return acc + (deposit.amount * juros);
     }, 0);
 
-    totalDepositado = Math.round(totalDepositado * 100) / 100;
+    totalDisponivel = Math.round(totalDisponivel * 100) / 100; // 2 casas decimais
+    console.log(`[Saque] Saldo total disponível para ${userId}: ${totalDisponivel}`);
 
-    console.log(`Total depositado disponível: ${totalDepositado}`);
-
-    if (totalDepositado <= 0) {
-        return message.reply("❌ Você não tem valores depositados para sacar!");
-    }
-
+    // Processar valor do saque
     let valorSaque;
     if (args[0].toLowerCase() === 'all') {
-        valorSaque = totalDepositado;
-        console.log("Usuário escolheu sacar tudo:", valorSaque);
+        valorSaque = totalDisponivel;
+        console.log(`[Saque] Saque total solicitado: ${valorSaque}`);
     } else {
-        // Corrigido: args[0] contém o valor, não args[1]
-        valorSaque = Number(args[0].replace(/[^0-9]/g, ''));
-        console.log("Valor de saque processado:", valorSaque);
+        // Extrair números e decimais (permite 500, 500.50, 1,000)
+        const valorBruto = args[0].replace(/[^0-9.]/g, '');
+        valorSaque = parseFloat(valorBruto);
 
         if (isNaN(valorSaque) || valorSaque <= 0) {
-            console.log("Erro: Valor de saque inválido.");
-            return message.reply("❌ Valor inválido! Use números ou `all`");
+            console.log(`[Saque] Valor inválido: ${args[0]}`);
+            return message.reply("❌ Formato inválido! Use: `h!sacar 500` ou `h!sacar all`");
         }
+
+        valorSaque = Math.round(valorSaque * 100) / 100; // Forçar 2 decimais
+        console.log(`[Saque] Valor numérico processado: ${valorSaque}`);
     }
 
-    if (valorSaque > totalDepositado) {
-        console.log(`Erro: Tentativa de sacar mais do que o permitido. Máximo permitido: ${totalDepositado}`);
-        return message.reply(`❌ Saldo insuficiente! Máximo sacável: ${totalDepositado.toLocaleString()} moedas`);
+    // Verificar saldo suficiente
+    if (valorSaque > totalDisponivel) {
+        console.log(`[Saque] Saque excedente! Usuário tentou sacar ${valorSaque} de ${totalDisponivel}`);
+        return message.reply(`❌ Saldo insuficiente! Máximo: ${totalDisponivel.toLocaleString()} moedas`);
     }
 
-            let remaining = valorSaque;
-            const newDeposits = [];
+    // Atualizar depósitos
+    let restante = valorSaque;
+    const novosDepositos = [];
 
-            for (const deposit of deposits) {
-                if (remaining <= 0) break;
+    for (const deposito of data[userId].deposits) {
+        if (restante <= 0) break;
 
-                const dias = Math.floor((Date.now() - deposit.timestamp) / 86400000);
-                const valorComJuros = deposit.amount * Math.pow(1.10, dias);
+        const dias = Math.floor((Date.now() - deposito.timestamp) / 86400000);
+        const valorComJuros = deposito.amount * Math.pow(1.10, dias);
 
-                if (valorComJuros <= remaining) {
-                    remaining -= valorComJuros;
-                } else {
-                    const proporcao = remaining / valorComJuros;
-                    const novoPrincipal = deposit.amount * (1 - proporcao);
+        if (valorComJuros <= restante) {
+            restante -= valorComJuros;
+        } else {
+            const proporcaoSaque = restante / valorComJuros;
+            const novoPrincipal = deposito.amount * (1 - proporcaoSaque);
 
-                    if (novoPrincipal > 0.01) {
-                        newDeposits.push({
-                            amount: novoPrincipal,
-                            timestamp: deposit.timestamp
-                        });
-                    }
-                    remaining = 0;
-                }
-            }
-
-            console.log(`Novo saldo pendente após saque: ${totalDepositado - valorSaque}`);
-
-            data[userId].deposits = newDeposits;
-            data[userId].balance = (data[userId].balance || 0) + valorSaque;
-
-            try {
-                fs.writeFileSync(path, JSON.stringify(data, null, 2));
-                const embed = new EmbedBuilder()
-                    .setTitle('🏧 Saque Realizado')
-                    .setDescription(`✅ **${valorSaque.toLocaleString()} moedas** sacadas com sucesso!`)
-                    .addFields({
-                        name: 'Novo Saldo Disponível',
-                        value: `${data[userId].balance.toLocaleString()} moedas`,
-                        inline: true
-                    })
-                    .setColor(0x2ecc71)
-                    .setFooter({
-                        text: `Saldo depositado restante: ${(totalDepositado - valorSaque).toLocaleString()} moedas`
-                    });
-
-                message.reply({
-                    embeds: [embed]
+            if (novoPrincipal >= 0.01) { // Evitar valores insignificantes
+                novosDepositos.push({
+                    amount: parseFloat(novoPrincipal.toFixed(2)),
+                    timestamp: deposito.timestamp
                 });
-
-                console.log(`Saque de ${valorSaque} moedas realizado com sucesso para ${userId}`);
-
-            } catch (err) {
-                console.error("Erro ao processar saque:", err);
-                message.reply('❌ Erro ao processar saque!');
             }
+            restante = 0;
         }
+    }
+
+    // Atualizar dados
+    data[userId].deposits = novosDepositos;
+    data[userId].balance = (data[userId].balance || 0) + valorSaque;
+
+    try {
+        fs.writeFileSync(path, JSON.stringify(data, null, 2));
+        console.log(`[Saque] Saque de ${valorSaque} moedas concluído para ${userId}`);
+
+        const embed = new EmbedBuilder()
+            .setTitle('✅ Saque Concluído')
+            .setDescription(`${valorSaque.toLocaleString()} moedas transferidas para sua carteira`)
+            .addFields(
+                { name: 'Saldo Disponível', value: `${data[userId].balance.toLocaleString()} moedas`, inline: true },
+                { name: 'Depósitos Restantes', value: `${(totalDisponivel - valorSaque).toLocaleString()} moedas`, inline: true }
+            )
+            .setColor(0x2ECC71)
+            .setFooter({ text: 'Use h!atm para ver seu saldo completo' });
+
+        return message.reply({ embeds: [embed] });
+
+    } catch (err) {
+        console.error("[Saque] Erro ao salvar dados:", err);
+        return message.reply("❌ Falha crítica! Contate um administrador");
+    }
+}
     });
 
     client.login(token);
