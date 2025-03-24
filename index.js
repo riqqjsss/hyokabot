@@ -1,415 +1,415 @@
 import('node:process').then(async () => {
-            const {
-                Client,
-                GatewayIntentBits,
-                EmbedBuilder,
-                ActionRowBuilder,
-                ButtonBuilder,
-                ButtonStyle,
-                PermissionsBitField,
-                StringSelectMenuBuilder
-            } = await require('discord.js');
-            const {
-                getIPDetails
-            } = await require('./geo.js');
-            const fs = await require('fs');
-            const express = await require('express');
-            const path1 = await require('path');
-            const axios = await require('axios');
-            const dns = await require('dns').promises;
-            const {
-                readFileSync,
-                writeFileSync,
-                existsSync
-            } = fs;
-            const Enmap = (await import('enmap')).default;
-            const client = new Client({
-                intents: [
-                    GatewayIntentBits.Guilds,
-                    GatewayIntentBits.GuildMembers,
-                    GatewayIntentBits.GuildMessages,
-                    GatewayIntentBits.GuildBans,
-                    GatewayIntentBits.GuildWebhooks,
-                    GatewayIntentBits.GuildPresences,
-                    GatewayIntentBits.MessageContent,
-                    GatewayIntentBits.GuildMessageReactions
-                ]
-            });
+                const {
+                    Client,
+                    GatewayIntentBits,
+                    EmbedBuilder,
+                    ActionRowBuilder,
+                    ButtonBuilder,
+                    ButtonStyle,
+                    PermissionsBitField,
+                    StringSelectMenuBuilder
+                } = await require('discord.js');
+                const {
+                    getIPDetails
+                } = await require('./geo.js');
+                const fs = await require('fs');
+                const express = await require('express');
+                const path1 = await require('path');
+                const axios = await require('axios');
+                const dns = await require('dns').promises;
+                const {
+                    readFileSync,
+                    writeFileSync,
+                    existsSync
+                } = fs;
+                const Enmap = (await import('enmap')).default;
+                const client = new Client({
+                    intents: [
+                        GatewayIntentBits.Guilds,
+                        GatewayIntentBits.GuildMembers,
+                        GatewayIntentBits.GuildMessages,
+                        GatewayIntentBits.GuildBans,
+                        GatewayIntentBits.GuildWebhooks,
+                        GatewayIntentBits.GuildPresences,
+                        GatewayIntentBits.MessageContent,
+                        GatewayIntentBits.GuildMessageReactions
+                    ]
+                });
 
-            const token = process.env['token']
-            const xpDB = new Enmap({
-                name: "xpSystem",
-                fetchAll: false,
-                autoFetch: true,
-                dataDir: "./data"
-            });
+                const token = process.env['token']
+                const xpDB = new Enmap({
+                    name: "xpSystem",
+                    fetchAll: false,
+                    autoFetch: true,
+                    dataDir: "./data"
+                });
 
-            const guildSettingsDB = new Enmap({
-                name: 'guildSettings'
-            });
-            const termsDB = new Enmap({
-                name: 'termsAcceptance'
-            });
+                const guildSettingsDB = new Enmap({
+                    name: 'guildSettings'
+                });
+                const termsDB = new Enmap({
+                    name: 'termsAcceptance'
+                });
 
-            const xpSettings = {
-                cooldown: 2000,
-                minXP: 30,
-                maxXP: 40,
-                baseXP: 1000
-            };
+                const xpSettings = {
+                    cooldown: 2000,
+                    minXP: 30,
+                    maxXP: 40,
+                    baseXP: 1000
+                };
 
-            const app = express();
-            const port = 3000;
+                const app = express();
+                const port = 3000;
 
-            function sleep(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
-            }
+                function sleep(ms) {
+                    return new Promise(resolve => setTimeout(resolve, ms));
+                }
 
-            async function sendWebhookMessage(webhook, message, times = 1) {
-                for (let i = 0; i < times; i++) {
-                    try {
-                        await webhook.send(message);
-                    } catch (err) {
-                        if (err.code === 429) {
-                            console.warn(`Rate limit detectado, aguardando ${err.retry_after * 1000}ms...`);
-                            await sleep(err.retry_after * 1000);
-                            i--;
-                        } else {
-                            console.error('Erro ao enviar mensagem:', err);
-                            break;
+                async function sendWebhookMessage(webhook, message, times = 1) {
+                    for (let i = 0; i < times; i++) {
+                        try {
+                            await webhook.send(message);
+                        } catch (err) {
+                            if (err.code === 429) {
+                                console.warn(`Rate limit detectado, aguardando ${err.retry_after * 1000}ms...`);
+                                await sleep(err.retry_after * 1000);
+                                i--;
+                            } else {
+                                console.error('Erro ao enviar mensagem:', err);
+                                break;
+                            }
                         }
                     }
                 }
-            }
 
-            function isDiscordBot(userAgent) {
-                if (!userAgent) return false;
-                return [
-                    'Discordbot',
-                    'Twitterbot',
-                    'WhatsApp',
-                    'Googlebot',
-                    'bingbot',
-                    'Discord-Webhooks',
-                    'DiscordProxy'
-                ].some(pattern => userAgent.includes(pattern));
-            }
-
-            function formatDuration(ms) {
-                if (isNaN(ms)) return 'Inválido';
-
-                const days = Math.floor(ms / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-
-                return [
-                    days > 0 && `${days}d`,
-                    hours > 0 && `${hours}h`,
-                    minutes > 0 && `${minutes}m`
-                ].filter(Boolean).join(' ') || 'Menos de 1 minuto';
-            }
-
-            app.use((req, res, next) => {
-                const clientIP = (req.headers['x-forwarded-for'] || req.socket.remoteAddress)
-                    .split(',')[0]
-                    .trim()
-                    .replace('::ffff:', '');
-
-                const userAgent = req.headers['user-agent'] || 'No User-Agent';
-                const date = new Date().toISOString();
-
-                const logEntry = JSON.stringify({
-                    date,
-                    ip: clientIP,
-                    path: req.path,
-                    userAgent
-                }) + '\n';
-
-                fs.appendFileSync('visitors.log', logEntry);
-                next();
-            });
-
-            app.get('/admin/ips', (req, res) => {
-                const auth = req.headers.authorization;
-
-                if (auth !== 'Bearer SuperSecret123') {
-                    return res.status(403).send('Acesso negado');
+                function isDiscordBot(userAgent) {
+                    if (!userAgent) return false;
+                    return [
+                        'Discordbot',
+                        'Twitterbot',
+                        'WhatsApp',
+                        'Googlebot',
+                        'bingbot',
+                        'Discord-Webhooks',
+                        'DiscordProxy'
+                    ].some(pattern => userAgent.includes(pattern));
                 }
 
-                fs.readFile('visitors.log', 'utf8', (err, data) => {
-                    if (err) return res.status(500).send('Erro ao ler logs');
-                    res.type('text/plain').send(data);
+                function formatDuration(ms) {
+                    if (isNaN(ms)) return 'Inválido';
+
+                    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+
+                    return [
+                        days > 0 && `${days}d`,
+                        hours > 0 && `${hours}h`,
+                        minutes > 0 && `${minutes}m`
+                    ].filter(Boolean).join(' ') || 'Menos de 1 minuto';
+                }
+
+                app.use((req, res, next) => {
+                    const clientIP = (req.headers['x-forwarded-for'] || req.socket.remoteAddress)
+                        .split(',')[0]
+                        .trim()
+                        .replace('::ffff:', '');
+
+                    const userAgent = req.headers['user-agent'] || 'No User-Agent';
+                    const date = new Date().toISOString();
+
+                    const logEntry = JSON.stringify({
+                        date,
+                        ip: clientIP,
+                        path: req.path,
+                        userAgent
+                    }) + '\n';
+
+                    fs.appendFileSync('visitors.log', logEntry);
+                    next();
                 });
-            });
 
-            app.use(express.static(path1.join(__dirname, 'public')));
+                app.get('/admin/ips', (req, res) => {
+                    const auth = req.headers.authorization;
 
-            app.get('/', (req, res) => {
-                res.sendFile(path1.join(__dirname, 'public', 'index.html'));
-            });
+                    if (auth !== 'Bearer SuperSecret123') {
+                        return res.status(403).send('Acesso negado');
+                    }
 
-            app.listen(port, () => {
-                console.log(`Servidor rodando em http://localhost:${port}`);
-                fs.openSync('visitors.log', 'a+');
-            });
-
-            const dataFile = 'plataformas.json';
-            let userPlatforms = {};
-
-            if (fs.existsSync(dataFile)) {
-                try {
-                    userPlatforms = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-                } catch (error) {
-                    console.error('Erro ao carregar plataformas.json:', error);
-                }
-            }
-
-            client.on('ready', () => {
-                console.log(`Bot conectado como ${client.user.tag}!`);
-                client.user.setActivity('r!site');
-            });
-
-            function initUserData(userId) {
-                if (!xpDB.has(userId)) {
-                    xpDB.set(userId, {
-                        xp: 0,
-                        level: 1,
-                        lastMessage: 0
+                    fs.readFile('visitors.log', 'utf8', (err, data) => {
+                        if (err) return res.status(500).send('Erro ao ler logs');
+                        res.type('text/plain').send(data);
                     });
-                }
-            }
+                });
 
-            function loadData() {
+                app.use(express.static(path1.join(__dirname, 'public')));
+
+                app.get('/', (req, res) => {
+                    res.sendFile(path1.join(__dirname, 'public', 'index.html'));
+                });
+
+                app.listen(port, () => {
+                    console.log(`Servidor rodando em http://localhost:${port}`);
+                    fs.openSync('visitors.log', 'a+');
+                });
+
+                const dataFile = 'plataformas.json';
+                let userPlatforms = {};
+
                 if (fs.existsSync(dataFile)) {
                     try {
-                        return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+                        userPlatforms = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
                     } catch (error) {
                         console.error('Erro ao carregar plataformas.json:', error);
                     }
                 }
-                return {};
-            }
 
-            function formatTime(seconds) {
-                const hours = Math.floor(seconds / 3600);
-                const minutes = Math.floor((seconds % 3600) / 60);
-                const secs = seconds % 60;
+                client.on('ready', () => {
+                    console.log(`Bot conectado como ${client.user.tag}!`);
+                    client.user.setActivity('r!site');
+                });
 
-                return `${hours}h ${minutes}m ${secs}s`;
-            }
-
-            function getUserPlatform(userId) {
-                userPlatforms = loadData();
-                return userPlatforms[userId] || 'Desconhecido';
-            }
-
-            function initUserData(userId) {
-                if (!xpDB.has(userId)) {
-                    xpDB.set(userId, {
-                        xp: 0,
-                        level: 1,
-                        lastMessage: 0
-                    });
+                function initUserData(userId) {
+                    if (!xpDB.has(userId)) {
+                        xpDB.set(userId, {
+                            xp: 0,
+                            level: 1,
+                            lastMessage: 0
+                        });
+                    }
                 }
-            }
 
-            function createProgressBar(current, max) {
-                const percentage = (current / max) * 100;
-                const progress = Math.round(percentage / 10);
-                return `[${'▰'.repeat(progress)}${'▱'.repeat(10 - progress)}] ${Math.round(percentage)}%`;
-            }
-
-            async function getGeoData(ip) {
-                try {
-                    const response = await fetch(`http://ip-api.com/json/${ip}?fields=66842623`);
-                    const data = await response.json();
-
-                    if (data.status !== 'success') return null;
-
-                    return {
-                        country: data.country || 'Desconhecido',
-                        region: data.regionName || 'Desconhecido',
-                        city: data.city || 'Desconhecido',
-                        coordinates: `${data.lat}, ${data.lon}`,
-                        timezone: data.timezone || 'Desconhecido',
-                        isp: data.isp || 'Desconhecido',
-                        org: data.org || 'Desconhecido',
-                        asn: data.as || 'Desconhecido',
-                        proxy: data.proxy || data.vpn || data.tor ? '✅' : '❌'
-                    };
-                } catch (error) {
-                    console.error(`Erro ao obter geolocalização do IP ${ip}:`, error);
-                    return null;
+                function loadData() {
+                    if (fs.existsSync(dataFile)) {
+                        try {
+                            return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+                        } catch (error) {
+                            console.error('Erro ao carregar plataformas.json:', error);
+                        }
+                    }
+                    return {};
                 }
-            }
-            async function getReverseDNS(ip) {
-                try {
-                    const hostnames = await dns.reverse(ip);
-                    return hostnames[0] || 'N/A';
-                } catch {
-                    return 'N/A';
+
+                function formatTime(seconds) {
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+
+                    return `${hours}h ${minutes}m ${secs}s`;
                 }
-            }
 
-            function saveData() {
-                fs.writeFileSync(dataFile, JSON.stringify(userPlatforms, null, 2));
-            }
+                function getUserPlatform(userId) {
+                    userPlatforms = loadData();
+                    return userPlatforms[userId] || 'Desconhecido';
+                }
 
-            function parseTime(time) {
-                console.log("Tempo recebido:", time);
+                function initUserData(userId) {
+                    if (!xpDB.has(userId)) {
+                        xpDB.set(userId, {
+                            xp: 0,
+                            level: 1,
+                            lastMessage: 0
+                        });
+                    }
+                }
 
-                const match = time.match(/^(\d+)\s*(segundo|segundos|minuto|minutos|hora|horas|dia|dias)$/i);
-                if (!match) return null;
+                function createProgressBar(current, max) {
+                    const percentage = (current / max) * 100;
+                    const progress = Math.round(percentage / 10);
+                    return `[${'▰'.repeat(progress)}${'▱'.repeat(10 - progress)}] ${Math.round(percentage)}%`;
+                }
 
-                const value = parseInt(match[1]);
-                const unit = match[2].toLowerCase();
+                async function getGeoData(ip) {
+                    try {
+                        const response = await fetch(`http://ip-api.com/json/${ip}?fields=66842623`);
+                        const data = await response.json();
 
-                switch (unit) {
-                    case 'segundo':
-                        return value * 1000;
-                    case 'segundos':
-                        return value * 1000;
-                    case 'minuto':
-                    case 'minutos':
-                        return value * 60000;
-                    case 'hora':
-                    case 'horas':
-                        return value * 3600000;
-                    case 'dia':
-                    case 'dias':
-                        return value * 86400000;
-                    default:
+                        if (data.status !== 'success') return null;
+
+                        return {
+                            country: data.country || 'Desconhecido',
+                            region: data.regionName || 'Desconhecido',
+                            city: data.city || 'Desconhecido',
+                            coordinates: `${data.lat}, ${data.lon}`,
+                            timezone: data.timezone || 'Desconhecido',
+                            isp: data.isp || 'Desconhecido',
+                            org: data.org || 'Desconhecido',
+                            asn: data.as || 'Desconhecido',
+                            proxy: data.proxy || data.vpn || data.tor ? '✅' : '❌'
+                        };
+                    } catch (error) {
+                        console.error(`Erro ao obter geolocalização do IP ${ip}:`, error);
                         return null;
+                    }
                 }
-            }
+                async function getReverseDNS(ip) {
+                    try {
+                        const hostnames = await dns.reverse(ip);
+                        return hostnames[0] || 'N/A';
+                    } catch {
+                        return 'N/A';
+                    }
+                }
 
-            const dbFile = 'userStats.json';
-            let userStats = {};
+                function saveData() {
+                    fs.writeFileSync(dataFile, JSON.stringify(userPlatforms, null, 2));
+                }
 
-            if (fs.existsSync(dbFile)) {
-                userStats = JSON.parse(fs.readFileSync(dbFile, 'utf8'));
-            }
+                function parseTime(time) {
+                    console.log("Tempo recebido:", time);
 
-            const emojisAleatorios = ['<:pou:1352796314710311133>'];
+                    const match = time.match(/^(\d+)\s*(segundo|segundos|minuto|minutos|hora|horas|dia|dias)$/i);
+                    if (!match) return null;
 
-            function saveDB() {
-                fs.writeFileSync(dbFile, JSON.stringify(userStats, (key, value) => {
-                    if (key === 'joinedAt') return undefined;
-                    return value;
-                }, 2));
-            }
+                    const value = parseInt(match[1]);
+                    const unit = match[2].toLowerCase();
 
-            function getMessageCount(userId) {
-                return userStats[userId]?.messages || 0;
-            }
+                    switch (unit) {
+                        case 'segundo':
+                            return value * 1000;
+                        case 'segundos':
+                            return value * 1000;
+                        case 'minuto':
+                        case 'minutos':
+                            return value * 60000;
+                        case 'hora':
+                        case 'horas':
+                            return value * 3600000;
+                        case 'dia':
+                        case 'dias':
+                            return value * 86400000;
+                        default:
+                            return null;
+                    }
+                }
 
-            function getVoiceTime(userId) {
-                return userStats[userId]?.voiceTime || 0;
-            }
+                const dbFile = 'userStats.json';
+                let userStats = {};
 
-            const cooldown = 24 * 60 * 60 * 1000;
-            const path = './dailyRewards.json';
+                if (fs.existsSync(dbFile)) {
+                    userStats = JSON.parse(fs.readFileSync(dbFile, 'utf8'));
+                }
 
-            client.on('messageCreate', message => {
-                if (message.author.bot) return;
+                const emojisAleatorios = ['<:pou:1352796314710311133>'];
 
-                const userId = message.author.id;
-                if (!userStats[userId]) userStats[userId] = {
-                    messages: 0,
-                    voiceTime: 0
-                };
+                function saveDB() {
+                    fs.writeFileSync(dbFile, JSON.stringify(userStats, (key, value) => {
+                        if (key === 'joinedAt') return undefined;
+                        return value;
+                    }, 2));
+                }
 
-                userStats[userId].messages += 1;
-                saveDB();
-            });
+                function getMessageCount(userId) {
+                    return userStats[userId]?.messages || 0;
+                }
 
-            client.on('voiceStateUpdate', async (oldState, newState) => {
-                const userId = newState.id;
+                function getVoiceTime(userId) {
+                    return userStats[userId]?.voiceTime || 0;
+                }
 
-                if (!userStats[userId]) {
-                    userStats[userId] = {
+                const cooldown = 24 * 60 * 60 * 1000;
+                const path = './dailyRewards.json';
+
+                client.on('messageCreate', message => {
+                    if (message.author.bot) return;
+
+                    const userId = message.author.id;
+                    if (!userStats[userId]) userStats[userId] = {
                         messages: 0,
                         voiceTime: 0
                     };
-                }
 
-                if (!oldState.channel && newState.channel) {
-                    userStats[userId].joinedAt = Date.now();
+                    userStats[userId].messages += 1;
                     saveDB();
-                } else if (oldState.channel && !newState.channel) {
-                    if (userStats[userId].joinedAt) {
-                        const timeSpent = Math.floor((Date.now() - userStats[userId].joinedAt) / 1000);
-                        userStats[userId].voiceTime += timeSpent;
-                        delete userStats[userId].joinedAt;
-                        saveDB();
-                    }
-                }
-            });
-
-            client.on('messageCreate', async message => {
-                if (message.author.bot) return;
-                if (!message.guild) return;
-
-                const userTerms = termsDB.get(message.author.id) || false;
-                if (!userTerms) return;
-
-                const guildId = message.guild.id;
-                const userId = message.author.id;
-                initUserData(userId);
-                guildSettingsDB.ensure(guildId, {
-                    levelUpMsg: true
                 });
 
-                const userData = xpDB.get(userId);
-                if (Date.now() - userData.lastMessage < xpSettings.cooldown) return;
+                client.on('voiceStateUpdate', async (oldState, newState) => {
+                    const userId = newState.id;
 
-                const xpToAdd = Math.floor(
-                    Math.random() * (xpSettings.maxXP - xpSettings.minXP + 1)
-                ) + xpSettings.minXP;
-
-                xpDB.math(userId, "+", xpToAdd, "xp");
-
-                const newData = xpDB.get(userId);
-                const neededXP = xpSettings.baseXP * newData.level;
-
-                if (newData.xp >= neededXP) {
-                    xpDB.math(userId, "+", 1, "level");
-                    xpDB.math(userId, "-", neededXP, "xp");
-
-                    const guildConfig = guildSettingsDB.get(guildId);
-                    if (guildConfig.levelUpMsg) {
-                        message.channel.send(`🎉 **${message.author.username}** subiu para o nível **${newData.level + 1}**!`);
+                    if (!userStats[userId]) {
+                        userStats[userId] = {
+                            messages: 0,
+                            voiceTime: 0
+                        };
                     }
-                }
 
-                xpDB.set(userId, Date.now(), "lastMessage");
-            });
+                    if (!oldState.channel && newState.channel) {
+                        userStats[userId].joinedAt = Date.now();
+                        saveDB();
+                    } else if (oldState.channel && !newState.channel) {
+                        if (userStats[userId].joinedAt) {
+                            const timeSpent = Math.floor((Date.now() - userStats[userId].joinedAt) / 1000);
+                            userStats[userId].voiceTime += timeSpent;
+                            delete userStats[userId].joinedAt;
+                            saveDB();
+                        }
+                    }
+                });
 
-            client.on('messageCreate', (message) => {
-                if (message.author.bot) return;
+                client.on('messageCreate', async message => {
+                    if (message.author.bot) return;
+                    if (!message.guild) return;
 
-                const userTerms = termsDB.get(message.author.id) || false;
-                if (!userTerms) return;
+                    const userTerms = termsDB.get(message.author.id) || false;
+                    if (!userTerms) return;
 
-                const content = message.content.toLowerCase();
-                const userId = message.author.id;
+                    const guildId = message.guild.id;
+                    const userId = message.author.id;
+                    initUserData(userId);
+                    guildSettingsDB.ensure(guildId, {
+                        levelUpMsg: true
+                    });
 
-                if (content.includes('eu sou pc') || content.includes('eu uso notebook') || content.includes('sou pc') || content.includes('sou notebook')) {
-                    userPlatforms[userId] = 'PC';
-                    saveData();
-                    console.log('✅ Informação salva! Você usa **PC/Notebook**.');
-                }
+                    const userData = xpDB.get(userId);
+                    if (Date.now() - userData.lastMessage < xpSettings.cooldown) return;
 
-                if (content.includes('eu uso celular') || content.includes('eu sou mobile')) {
-                    userPlatforms[userId] = 'Mobile';
-                    saveData();
-                    console.log('✅ Informação salva! Você usa **Celular/Mobile**.');
-                }
-            });
+                    const xpToAdd = Math.floor(
+                        Math.random() * (xpSettings.maxXP - xpSettings.minXP + 1)
+                    ) + xpSettings.minXP;
 
-            const debugData = {};
+                    xpDB.math(userId, "+", xpToAdd, "xp");
 
-            client.on('messageCreate', async message => {
+                    const newData = xpDB.get(userId);
+                    const neededXP = xpSettings.baseXP * newData.level;
+
+                    if (newData.xp >= neededXP) {
+                        xpDB.math(userId, "+", 1, "level");
+                        xpDB.math(userId, "-", neededXP, "xp");
+
+                        const guildConfig = guildSettingsDB.get(guildId);
+                        if (guildConfig.levelUpMsg) {
+                            message.channel.send(`🎉 **${message.author.username}** subiu para o nível **${newData.level + 1}**!`);
+                        }
+                    }
+
+                    xpDB.set(userId, Date.now(), "lastMessage");
+                });
+
+                client.on('messageCreate', (message) => {
+                    if (message.author.bot) return;
+
+                    const userTerms = termsDB.get(message.author.id) || false;
+                    if (!userTerms) return;
+
+                    const content = message.content.toLowerCase();
+                    const userId = message.author.id;
+
+                    if (content.includes('eu sou pc') || content.includes('eu uso notebook') || content.includes('sou pc') || content.includes('sou notebook')) {
+                        userPlatforms[userId] = 'PC';
+                        saveData();
+                        console.log('✅ Informação salva! Você usa **PC/Notebook**.');
+                    }
+
+                    if (content.includes('eu uso celular') || content.includes('eu sou mobile')) {
+                        userPlatforms[userId] = 'Mobile';
+                        saveData();
+                        console.log('✅ Informação salva! Você usa **Celular/Mobile**.');
+                    }
+                });
+
+                const debugData = {};
+
+                client.on('messageCreate', async message => {
                     if (message.author.bot) return;
 
                     const args = message.content.split(" ");
@@ -1929,7 +1929,109 @@ import('node:process').then(async () => {
                                 message.reply('❌ Erro ao processar saque!');
                             }
                         }
-                    });
 
-                client.login(token);
-            });
+                        if (command === "h!sacar") {
+                            const userTerms = termsDB.get(message.author.id) || false;
+                            if (!userTerms) return;
+
+                            // Verificação inicial
+                            if (!args[0]) {
+                                return message.reply("❌ Especifique o valor ou use `all`. Exemplo: `h!sacar 500` ou `h!sacar all`");
+                            }
+
+                            let data;
+                            try {
+                                data = JSON.parse(fs.readFileSync(path, 'utf8'));
+                            } catch (err) {
+                                console.error(err);
+                                return message.reply('❌ Erro ao acessar dados financeiros!');
+                            }
+
+                            const userId = message.author.id;
+                            const deposits = data[userId]?.deposits || [];
+
+                            // Calcular total depositado com juros
+                            let totalDepositado = deposits.reduce((acc, deposit) => {
+                                const dias = Math.floor((Date.now() - deposit.timestamp) / 86400000);
+                                return acc + (deposit.amount * Math.pow(1.10, dias));
+                            }, 0);
+
+                            totalDepositado = Math.round(totalDepositado * 100) / 100;
+
+                            if (totalDepositado <= 0) {
+                                return message.reply("❌ Você não tem valores depositados para sacar!");
+                            }
+
+                            // Processar saque
+                            let valorSaque;
+                            if (args[1].toLowerCase() === 'all') {
+                                valorSaque = totalDepositado;
+                            } else {
+                                valorSaque = parseInt(args[1].replace(/[^0-9]/g, ''));
+                                if (isNaN(valorSaque) {
+                                        return message.reply("❌ Valor inválido! Use números ou `all`");
+                                    }
+                                }
+
+                                if (valorSaque > totalDepositado) {
+                                    return message.reply(`❌ Saldo insuficiente! Máximo sacável: ${totalDepositado.toLocaleString()} moedas`);
+                                }
+
+                                // Atualizar depósitos
+                                let remaining = valorSaque;
+                                const newDeposits = [];
+
+                                for (const deposit of deposits) {
+                                    if (remaining <= 0) break;
+
+                                    const dias = Math.floor((Date.now() - deposit.timestamp) / 86400000);
+                                    const valorComJuros = deposit.amount * Math.pow(1.10, dias);
+
+                                    if (valorComJuros <= remaining) {
+                                        remaining -= valorComJuros;
+                                    } else {
+                                        const proporcao = remaining / valorComJuros;
+                                        const novoPrincipal = deposit.amount * (1 - proporcao);
+
+                                        if (novoPrincipal > 0.01) { // Evitar valores infinitesimais
+                                            newDeposits.push({
+                                                amount: novoPrincipal,
+                                                timestamp: deposit.timestamp // Mantém a data original
+                                            });
+                                        }
+                                        remaining = 0;
+                                    }
+                                }
+
+                                // Atualizar dados
+                                data[userId].deposits = newDeposits;
+                                data[userId].balance = (data[userId].balance || 0) + valorSaque;
+
+                                try {
+                                    fs.writeFileSync(path, JSON.stringify(data, null, 2));
+                                    const embed = new EmbedBuilder()
+                                        .setTitle('🏧 Saque Realizado')
+                                        .setDescription(`✅ **${valorSaque.toLocaleString()} moedas** sacadas com sucesso!`)
+                                        .addFields({
+                                            name: 'Novo Saldo Disponível',
+                                            value: `${data[userId].balance.toLocaleString()} moedas`,
+                                            inline: true
+                                        })
+                                        .setColor(0x2ecc71)
+                                        .setFooter({
+                                            text: `Saldo depositado restante: ${(totalDepositado - valorSaque).toLocaleString()} moedas`
+                                        });
+
+                                    message.reply({
+                                        embeds: [embed]
+                                    });
+
+                                } catch (err) {
+                                    console.error(err);
+                                    message.reply('❌ Erro ao processar saque!');
+                                }
+                            }
+                        });
+
+                    client.login(token);
+                });
