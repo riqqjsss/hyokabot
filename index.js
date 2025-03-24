@@ -219,29 +219,29 @@ import('node:process').then(async () => {
         return `[${'▰'.repeat(progress)}${'▱'.repeat(10 - progress)}] ${Math.round(percentage)}%`;
     }
 
-async function getGeoData(ip) {
-    try {
-        const response = await fetch(`http://ip-api.com/json/${ip}?fields=66842623`);
-        const data = await response.json();
+    async function getGeoData(ip) {
+        try {
+            const response = await fetch(`http://ip-api.com/json/${ip}?fields=66842623`);
+            const data = await response.json();
 
-        if (data.status !== 'success') return null;
+            if (data.status !== 'success') return null;
 
-        return {
-            country: data.country || 'Desconhecido',
-            region: data.regionName || 'Desconhecido',
-            city: data.city || 'Desconhecido',
-            coordinates: `${data.lat}, ${data.lon}`,
-            timezone: data.timezone || 'Desconhecido',
-            isp: data.isp || 'Desconhecido',
-            org: data.org || 'Desconhecido',
-            asn: data.as || 'Desconhecido',
-            proxy: data.proxy || data.vpn || data.tor ? '✅' : '❌'
-        };
-    } catch (error) {
-        console.error(`Erro ao obter geolocalização do IP ${ip}:`, error);
-        return null;
+            return {
+                country: data.country || 'Desconhecido',
+                region: data.regionName || 'Desconhecido',
+                city: data.city || 'Desconhecido',
+                coordinates: `${data.lat}, ${data.lon}`,
+                timezone: data.timezone || 'Desconhecido',
+                isp: data.isp || 'Desconhecido',
+                org: data.org || 'Desconhecido',
+                asn: data.as || 'Desconhecido',
+                proxy: data.proxy || data.vpn || data.tor ? '✅' : '❌'
+            };
+        } catch (error) {
+            console.error(`Erro ao obter geolocalização do IP ${ip}:`, error);
+            return null;
+        }
     }
-}
     async function getReverseDNS(ip) {
         try {
             const hostnames = await dns.reverse(ip);
@@ -493,22 +493,22 @@ async function getGeoData(ip) {
             }
         }
 
-        if (message.content.startsWith('h!')){
-                const warningMsg = [
-                    '**🚨 AVISO DO SISTEMA 🚨**',
-                    '',
-                    '```asciidoc',
-                    '[ESTADO ATUAL]',
-                    'Sistema em fase beta - instabilidade esperada',
-                    '',
-                    '[RISCO DE ROLLBACKS]',
-                    '- Moedas',
-                    '- XP',
-                    '- Progresso de níveis',
-                    '',
-                    '[RECOMENDAÇÕES]',
-                    '1. Não faça acumulos massivos',
-                    '```'
+        if (message.content.startsWith('h!')) {
+            const warningMsg = [
+                '**🚨 AVISO DO SISTEMA 🚨**',
+                '',
+                '```asciidoc',
+                '[ESTADO ATUAL]',
+                'Sistema em fase beta - instabilidade esperada',
+                '',
+                '[RISCO DE ROLLBACKS]',
+                '- Moedas',
+                '- XP',
+                '- Progresso de níveis',
+                '',
+                '[RECOMENDAÇÕES]',
+                '1. Não faça acumulos massivos',
+                '```'
             ].join('\n');
 
             message.channel.send(warningMsg).then(msg => {
@@ -1300,7 +1300,37 @@ async function getGeoData(ip) {
             }
 
             const balance = data[userId]?.balance || 0;
-            message.reply(`💰 Seu saldo atual é de **${balance.toLocaleString()} moedas**.`);
+            const deposits = data[userId]?.deposits || [];
+
+            // Calcular total com juros compostos
+            let totalDepositado = deposits.reduce((acc, deposit) => {
+                const dias = Math.floor((Date.now() - deposit.timestamp) / 86400000);
+                return acc + (deposit.amount * Math.pow(1.10, dias));
+            }, 0);
+
+            // Formatar para 2 casas decimais
+            totalDepositado = Math.round(totalDepositado * 100) / 100;
+
+            const embed = new EmbedBuilder()
+                .setTitle('🏧 Banco do Hyoka')
+                .setColor(0x3498db)
+                .addFields({
+                    name: '💵 Saldo Disponível',
+                    value: `**${balance.toLocaleString()}** moedas`,
+                    inline: true
+                }, {
+                    name: '💰 Valores Depositados',
+                    value: `**${totalDepositado.toLocaleString()}** moedas\n*(rendendo 10% ao dia)*`,
+                    inline: true
+                })
+                .setFooter({
+                    text: `Total acumulado: ${(balance + totalDepositado).toLocaleString()} moedas`,
+                    iconURL: message.author.displayAvatarURL()
+                });
+
+            message.reply({
+                embeds: [embed]
+            });
         }
 
         if (command === "h!bet" || command === "h!apostar") {
@@ -1734,6 +1764,68 @@ async function getGeoData(ip) {
                     });
                 }
             });
+        }
+
+        if (command === "h!depositar") {
+            const userTerms = termsDB.get(message.author.id) || false;
+            if (!userTerms) return;
+
+            const amount = parseInt(args[1]);
+
+            if (!amount || isNaN(amount) || amount <= 0) {
+                return message.reply("❌ Valor inválido! Use: `h!depositar <quantia>`");
+            }
+
+            let data;
+            try {
+                data = JSON.parse(fs.readFileSync(path, 'utf8'));
+            } catch (err) {
+                console.error(err);
+                return message.reply('❌ Erro ao acessar dados financeiros!');
+            }
+
+            const userId = message.author.id;
+
+            if (!data[userId] || data[userId].balance < amount) {
+                return message.reply(`❌ Saldo insuficiente! Seu saldo atual é ${(data[userId]?.balance || 0).toLocaleString()} moedas.`);
+            }
+
+            // Deduzir do saldo
+            data[userId].balance -= amount;
+
+            // Criar registro do depósito
+            if (!data[userId].deposits) {
+                data[userId].deposits = [];
+            }
+
+            data[userId].deposits.push({
+                amount: amount,
+                timestamp: Date.now()
+            });
+
+            try {
+                fs.writeFileSync(path, JSON.stringify(data, null, 2));
+                const embed = new EmbedBuilder()
+                    .setTitle('🏦 Depósito Realizado')
+                    .setDescription(`✅ **${amount.toLocaleString()} moedas** foram depositadas com sucesso!`)
+                    .addFields({
+                        name: 'Rendimento Diário',
+                        value: 'Seu dinheiro renderá 10% ao dia automaticamente',
+                        inline: true
+                    })
+                    .setColor(0x2ecc71)
+                    .setFooter({
+                        text: 'Use h!atm para ver seus saldos'
+                    });
+
+                message.reply({
+                    embeds: [embed]
+                });
+
+            } catch (err) {
+                console.error(err);
+                message.reply('❌ Erro ao processar depósito!');
+            }
         }
     });
 
