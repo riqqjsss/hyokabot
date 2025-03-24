@@ -1771,6 +1771,7 @@ import('node:process').then(async () => {
             if (!userTerms) return;
 
             const amount = parseInt(args[1]);
+            console.log(amount)
 
             if (!amount || isNaN(amount) || amount <= 0) {
                 return message.reply("❌ Valor inválido! Use: `h!depositar <quantia>`");
