@@ -1770,19 +1770,10 @@ import('node:process').then(async () => {
             const userTerms = termsDB.get(message.author.id) || false;
             if (!userTerms) return;
 
-            console.log("Args recebidos:", args); // Debug
+            const amount = parseInt(args[0]);
 
-            // Pegando o primeiro argumento (não args[1], mas args[0])
-            const sanitizedInput = args[0]?.trim();
-
-            if (!sanitizedInput) {
-                return message.reply("❌ Você precisa especificar um valor para depositar! Exemplo: `h!depositar 1205`");
-            }
-
-            const amount = Number(sanitizedInput);
-
-            if (isNaN(amount) || amount <= 0) {
-                return message.reply("❌ Valor inválido! Use apenas números (Ex: `h!depositar 1205`)");
+            if (!amount || isNaN(amount) || amount <= 0) {
+                return message.reply("❌ Valor inválido! Use: `h!depositar <quantia>`");
             }
 
             let data;
@@ -1795,27 +1786,22 @@ import('node:process').then(async () => {
 
             const userId = message.author.id;
 
-            if (!data[userId]) {
-                data[userId] = {
-                    balance: 0,
-                    deposits: []
-                };
+            if (!data[userId] || data[userId].balance < amount) {
+                return message.reply(`❌ Saldo insuficiente! Seu saldo atual é ${(data[userId]?.balance || 0).toLocaleString()} moedas.`);
             }
 
-            data[userId].balance = Number(data[userId].balance) || 0;
-
-            if (data[userId].balance < amount) {
-                return message.reply(`❌ Saldo insuficiente! Seu saldo atual é ${data[userId].balance.toLocaleString()} moedas.`);
-            }
-
+            // Deduzir do saldo
             data[userId].balance -= amount;
+
+            // Criar registro do depósito
+            if (!data[userId].deposits) {
+                data[userId].deposits = [];
+            }
 
             data[userId].deposits.push({
                 amount: amount,
                 timestamp: Date.now()
             });
-
-            console.log("Dados antes de salvar:", JSON.stringify(data[userId], null, 2));
 
             try {
                 fs.writeFileSync(path, JSON.stringify(data, null, 2));
