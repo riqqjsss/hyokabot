@@ -1934,12 +1934,13 @@ import('node:process').then(async () => {
         }
 
         if (command === "h!sacar") {
+            console.log(args); // Debug: Exibir os argumentos recebidos no console
+
             const userTerms = termsDB.get(message.author.id) || false;
             if (!userTerms) return;
-            console.log(args);
 
             // Verificação inicial
-            if (!args[1]) {
+            if (!args[0]) {
                 return message.reply("❌ Especifique o valor ou use `all`. Exemplo: `h!sacar 500` ou `h!sacar all`");
             }
 
@@ -1968,10 +1969,10 @@ import('node:process').then(async () => {
 
             // Processar saque
             let valorSaque;
-            if (args[1].toLowerCase() === 'all') {
+            if (args[0].toLowerCase() === 'all') {
                 valorSaque = totalDepositado;
             } else {
-                valorSaque = parseInt(args[1].replace(/[^0-9]/g, ''));
+                valorSaque = parseInt(args[0].replace(/[^0-9]/g, ''));
                 if (isNaN(valorSaque)) {
                     return message.reply("❌ Valor inválido! Use números ou `all`");
                 }
@@ -2035,7 +2036,6 @@ import('node:process').then(async () => {
                 message.reply('❌ Erro ao processar saque!');
             }
         }
-
     });
 
     client.login(token);
