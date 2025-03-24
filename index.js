@@ -1964,11 +1964,11 @@ import('node:process').then(async () => {
 
                             // Processar saque
                             let valorSaque;
-                            if (args[1].toLowerCase() === 'all') {
+                            if (args[0].toLowerCase() === 'all') {
                                 valorSaque = totalDepositado;
                             } else {
                                 valorSaque = parseInt(args[1].replace(/[^0-9]/g, ''));
-                                if (isNaN(valorSaque) {
+                                if (isNaN(valorSaque)) {
                                         return message.reply("❌ Valor inválido! Use números ou `all`");
                                     }
                                 }
