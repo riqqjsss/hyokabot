@@ -1935,7 +1935,7 @@ import('node:process').then(async () => {
 
         if (command === "h!sacar") {
             console.log("Recebido comando de saque!");
-            console.log("Argumentos:", args); // Mostra os argumentos recebidos no console
+            console.log("Argumentos recebidos:", args);
 
             const userTerms = termsDB.get(message.author.id) || false;
             if (!userTerms) return;
@@ -1962,7 +1962,7 @@ import('node:process').then(async () => {
 
             totalDepositado = Math.round(totalDepositado * 100) / 100;
 
-            console.log("Total depositado:", totalDepositado);
+            console.log(`Total depositado disponível: ${totalDepositado}`);
 
             if (totalDepositado <= 0) {
                 return message.reply("❌ Você não tem valores depositados para sacar!");
@@ -1971,17 +1971,19 @@ import('node:process').then(async () => {
             let valorSaque;
             if (args[0].toLowerCase() === 'all') {
                 valorSaque = totalDepositado;
-                console.log("Saque total detectado:", valorSaque);
+                console.log("Usuário escolheu sacar tudo:", valorSaque);
             } else {
-                valorSaque = parseInt(args[0].replace(/[^0-9]/g, ''), 10);
-                console.log("Saque específico detectado:", valorSaque);
+                valorSaque = Number(args[0].replace(/[^0-9]/g, ''));
+                console.log("Valor de saque processado:", valorSaque);
 
-                if (isNaN(valorSaque)) {
+                if (isNaN(valorSaque) || valorSaque <= 0) {
+                    console.log("Erro: Valor de saque inválido.");
                     return message.reply("❌ Valor inválido! Use números ou `all`");
                 }
             }
 
             if (valorSaque > totalDepositado) {
+                console.log(`Erro: Tentativa de sacar mais do que o permitido. Máximo permitido: ${totalDepositado}`);
                 return message.reply(`❌ Saldo insuficiente! Máximo sacável: ${totalDepositado.toLocaleString()} moedas`);
             }
 
@@ -2010,6 +2012,8 @@ import('node:process').then(async () => {
                 }
             }
 
+            console.log(`Novo saldo pendente após saque: ${totalDepositado - valorSaque}`);
+
             data[userId].deposits = newDeposits;
             data[userId].balance = (data[userId].balance || 0) + valorSaque;
 
@@ -2032,7 +2036,7 @@ import('node:process').then(async () => {
                     embeds: [embed]
                 });
 
-                console.log("Saque concluído com sucesso!");
+                console.log(`Saque de ${valorSaque} moedas realizado com sucesso para ${userId}`);
 
             } catch (err) {
                 console.error("Erro ao processar saque:", err);
