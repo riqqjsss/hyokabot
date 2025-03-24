@@ -1770,7 +1770,7 @@ import('node:process').then(async () => {
             const userTerms = termsDB.get(message.author.id) || false;
             if (!userTerms) return;
 
-            const amount = parseInt(args[2]);
+            const amount = parseInt(args[1]);
             console.log(amount)
 
             if (!amount || isNaN(amount) || amount <= 0) {
