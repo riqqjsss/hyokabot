@@ -1771,16 +1771,15 @@ import('node:process').then(async () => {
             if (!userTerms) return;
 
             console.log("Args recebidos:", args); // Debug
-            if (!args[1]) {
+
+            // Pegando o primeiro argumento (não args[1], mas args[0])
+            const sanitizedInput = args[0]?.trim();
+
+            if (!sanitizedInput) {
                 return message.reply("❌ Você precisa especificar um valor para depositar! Exemplo: `h!depositar 1205`");
             }
 
-            // Limpar entrada e garantir que seja um número válido
-            const sanitizedInput = args[1].trim();
             const amount = Number(sanitizedInput);
-
-            console.log("Input sanitizado:", sanitizedInput); // Debug
-            console.log("Valor convertido:", amount); // Debug
 
             if (isNaN(amount) || amount <= 0) {
                 return message.reply("❌ Valor inválido! Use apenas números (Ex: `h!depositar 1205`)");
@@ -1842,6 +1841,7 @@ import('node:process').then(async () => {
                 message.reply('❌ Erro ao processar depósito!');
             }
         }
+
     });
 
     client.login(token);
