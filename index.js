@@ -1770,13 +1770,8 @@ import('node:process').then(async () => {
             const userTerms = termsDB.get(message.author.id) || false;
             if (!userTerms) return;
 
-            // Verificação robusta do argumento
-            if (!args[1] || args[1].trim() === "") {
-                return message.reply("❌ Especifique o valor! Exemplo: `h!depositar 500`");
-            }
-
             // Sanitização completa
-            const sanitizedInput = args[1].trim().replace(/[^0-9]/g, '');
+            const sanitizedInput = args[1]
             const amount = parseInt(sanitizedInput);
 
             console.log("Input sanitizado:", sanitizedInput); // Debug
