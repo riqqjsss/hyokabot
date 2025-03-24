@@ -1937,7 +1937,7 @@ import('node:process').then(async () => {
             if (!userTerms) return;
 
             // Verificação inicial
-            if (!args[0]) {
+            if (!args[1]) {
                 return message.reply("❌ Especifique o valor ou use `all`. Exemplo: `h!sacar 500` ou `h!sacar all`");
             }
 
@@ -1966,7 +1966,7 @@ import('node:process').then(async () => {
 
             // Processar saque
             let valorSaque;
-            if (args[0].toLowerCase() === 'all') {
+            if (args[1].toLowerCase() === 'all') {
                 valorSaque = totalDepositado;
             } else {
                 valorSaque = parseInt(args[1].replace(/[^0-9]/g, ''));
