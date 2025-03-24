@@ -1770,12 +1770,17 @@ import('node:process').then(async () => {
             const userTerms = termsDB.get(message.author.id) || false;
             if (!userTerms) return;
 
-            const sanitizedInput = args[1];
-            const amount = parseInt(sanitizedInput);
+            console.log("Args recebidos:", args); // Debug
+            if (!args[1]) {
+                return message.reply("❌ Você precisa especificar um valor para depositar! Exemplo: `h!depositar 1205`");
+            }
 
-            console.log("Args recebidos:", args);
-            console.log("Valor bruto:", sanitizedInput);
-            console.log("Valor convertido:", amount);
+            // Limpar entrada e garantir que seja um número válido
+            const sanitizedInput = args[1].trim();
+            const amount = Number(sanitizedInput);
+
+            console.log("Input sanitizado:", sanitizedInput); // Debug
+            console.log("Valor convertido:", amount); // Debug
 
             if (isNaN(amount) || amount <= 0) {
                 return message.reply("❌ Valor inválido! Use apenas números (Ex: `h!depositar 1205`)");
@@ -1791,7 +1796,6 @@ import('node:process').then(async () => {
 
             const userId = message.author.id;
 
-            // Criar conta se não existir
             if (!data[userId]) {
                 data[userId] = {
                     balance: 0,
@@ -1799,17 +1803,14 @@ import('node:process').then(async () => {
                 };
             }
 
-            // Garantir que balance seja um número
             data[userId].balance = Number(data[userId].balance) || 0;
 
             if (data[userId].balance < amount) {
                 return message.reply(`❌ Saldo insuficiente! Seu saldo atual é ${data[userId].balance.toLocaleString()} moedas.`);
             }
 
-            // Deduzir do saldo
             data[userId].balance -= amount;
 
-            // Criar registro do depósito
             data[userId].deposits.push({
                 amount: amount,
                 timestamp: Date.now()
@@ -1841,7 +1842,6 @@ import('node:process').then(async () => {
                 message.reply('❌ Erro ao processar depósito!');
             }
         }
-
     });
 
     client.login(token);
