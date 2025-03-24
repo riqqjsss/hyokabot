@@ -1933,59 +1933,61 @@ import('node:process').then(async () => {
             }
         }
 
-        if (command === "h!sacar") {
-            console.log("Recebido comando de saque!");
-            console.log("Argumentos recebidos:", args);
+if (command === "h!sacar") {
+    console.log("Recebido comando de saque!");
+    console.log("Argumentos recebidos:", args);
 
-            const userTerms = termsDB.get(message.author.id) || false;
-            if (!userTerms) return;
+    const userTerms = termsDB.get(message.author.id) || false;
+    if (!userTerms) return;
 
-            if (!args[0]) {
-                return message.reply("❌ Especifique o valor ou use `all`. Exemplo: `h!sacar 500` ou `h!sacar all`");
-            }
+    // Verificação inicial corrigida: args[0] é o primeiro argumento após o comando
+    if (!args[0]) {
+        return message.reply("❌ Especifique o valor ou use `all`. Exemplo: `h!sacar 500` ou `h!sacar all`");
+    }
 
-            let data;
-            try {
-                data = JSON.parse(fs.readFileSync(path, 'utf8'));
-            } catch (err) {
-                console.error("Erro ao carregar os dados:", err);
-                return message.reply('❌ Erro ao acessar dados financeiros!');
-            }
+    let data;
+    try {
+        data = JSON.parse(fs.readFileSync(path, 'utf8'));
+    } catch (err) {
+        console.error("Erro ao carregar os dados:", err);
+        return message.reply('❌ Erro ao acessar dados financeiros!');
+    }
 
-            const userId = message.author.id;
-            const deposits = data[userId]?.deposits || [];
+    const userId = message.author.id;
+    const deposits = data[userId]?.deposits || [];
 
-            let totalDepositado = deposits.reduce((acc, deposit) => {
-                const dias = Math.floor((Date.now() - deposit.timestamp) / 86400000);
-                return acc + (deposit.amount * Math.pow(1.10, dias));
-            }, 0);
+    let totalDepositado = deposits.reduce((acc, deposit) => {
+        const dias = Math.floor((Date.now() - deposit.timestamp) / 86400000);
+        return acc + (deposit.amount * Math.pow(1.10, dias));
+    }, 0);
 
-            totalDepositado = Math.round(totalDepositado * 100) / 100;
+    totalDepositado = Math.round(totalDepositado * 100) / 100;
 
-            console.log(`Total depositado disponível: ${totalDepositado}`);
+    console.log(`Total depositado disponível: ${totalDepositado}`);
 
-            if (totalDepositado <= 0) {
-                return message.reply("❌ Você não tem valores depositados para sacar!");
-            }
+    if (totalDepositado <= 0) {
+        return message.reply("❌ Você não tem valores depositados para sacar!");
+    }
 
-            let valorSaque;
-            if (args[0].toLowerCase() === 'all') {
-                valorSaque = totalDepositado;
-                console.log("Usuário escolheu sacar tudo:", valorSaque);
-            } else {
-                valorSaque = Number(args[0].replace(/[^0-9]/g, ''));
-                console.log("Valor de saque processado:", valorSaque);
+    let valorSaque;
+    if (args[0].toLowerCase() === 'all') {
+        valorSaque = totalDepositado;
+        console.log("Usuário escolheu sacar tudo:", valorSaque);
+    } else {
+        // Corrigido: args[0] contém o valor, não args[1]
+        valorSaque = Number(args[0].replace(/[^0-9]/g, ''));
+        console.log("Valor de saque processado:", valorSaque);
 
-                if (isNaN(valorSaque) || valorSaque <= 0) {
-                    console.log("Erro: Valor de saque inválido.");
-                    return message.reply("❌ Valor inválido! Use números ou `all`");
-                }
-            }
+        if (isNaN(valorSaque) || valorSaque <= 0) {
+            console.log("Erro: Valor de saque inválido.");
+            return message.reply("❌ Valor inválido! Use números ou `all`");
+        }
+    }
 
-            if (valorSaque > totalDepositado) {
-                console.log(`Erro: Tentativa de sacar mais do que o permitido. Máximo permitido: ${totalDepositado}`);
-                return message.reply(`❌ Saldo insuficiente! Máximo sacável: ${totalDepositado.toLocaleString()} moedas`);
-            }
+    if (valorSaque > totalDepositado) {
+        console.log(`Erro: Tentativa de sacar mais do que o permitido. Máximo permitido: ${totalDepositado}`);
+        return message.reply(`❌ Saldo insuficiente! Máximo sacável: ${totalDepositado.toLocaleString()} moedas`);
+    }
 
             let remaining = valorSaque;
             const newDeposits = [];
